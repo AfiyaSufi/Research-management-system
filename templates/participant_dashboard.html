@@ -1,0 +1,167 @@
+{% extends 'base.html' %} {% block content %}
+<h2>Participant Dashboard</h2>
+<button class="btn btn-primary mb-3" onclick="showUploadModal()">
+  New Proposal
+</button>
+
+<div id="proposals-list"></div>
+
+<!-- Upload Modal (Simplified as a form section for now) -->
+<div id="upload-section" style="display: none" class="card p-3 mb-3">
+  <h4>Submit Proposal</h4>
+  <form id="proposal-form">
+    <div class="mb-3">
+      <label>Title</label>
+      <input type="text" id="p-title" class="form-control" required />
+    </div>
+    <div class="mb-3">
+      <label>Description</label>
+      <textarea id="p-desc" class="form-control" required></textarea>
+    </div>
+    <div class="mb-3">
+      <label>File</label>
+      <input type="file" id="p-file" class="form-control" required />
+    </div>
+    <button type="submit" class="btn btn-success">Submit</button>
+    <button type="button" class="btn btn-secondary" onclick="hideUploadModal()">
+      Cancel
+    </button>
+  </form>
+</div>
+
+<!-- Budget Upload Modal -->
+<div id="budget-section" style="display: none" class="card p-3 mb-3">
+  <h4>Upload Budget & Revised Proposal</h4>
+  <form id="budget-form">
+    <input type="hidden" id="budget-proposal-id" />
+    <div class="mb-3">
+      <label>Revised Proposal</label>
+      <input type="file" id="b-revised" class="form-control" />
+    </div>
+    <div class="mb-3">
+      <label>Budget</label>
+      <input type="file" id="b-budget" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-success">Upload</button>
+    <button type="button" class="btn btn-secondary" onclick="hideBudgetModal()">
+      Cancel
+    </button>
+  </form>
+</div>
+
+{% endblock %} {% block scripts %}
+<script>
+  function showUploadModal() {
+    document.getElementById("upload-section").style.display = "block";
+  }
+  function hideUploadModal() {
+    document.getElementById("upload-section").style.display = "none";
+  }
+
+  function showBudgetModal(id) {
+    document.getElementById("budget-section").style.display = "block";
+    document.getElementById("budget-proposal-id").value = id;
+  }
+  function hideBudgetModal() {
+    document.getElementById("budget-section").style.display = "none";
+  }
+
+  async function loadProposals() {
+    try {
+      const res = await axios.get(`${API_URL}/proposals/`);
+      const list = document.getElementById("proposals-list");
+      list.innerHTML = "";
+      res.data.forEach((p) => {
+        let actions = "";
+        if (p.current_step === 5 && p.status !== "REJECTED") {
+          actions = `<button class="btn btn-sm btn-warning" onclick="showBudgetModal(${p.id})">Upload Budget</button>`;
+        }
+
+        list.innerHTML += `
+                    <div class="step-card">
+                        <h5>${p.title} <span class="badge bg-secondary">${
+          p.status
+        }</span></h5>
+                        <p>Step: ${p.current_step}</p>
+                        <p>${p.description}</p>
+                        ${actions}
+                        <hr>
+                        <h6>Timeline</h6>
+                        <ul>
+                            ${p.timeline
+                              .map(
+                                (t) =>
+                                  `<li>${t.step_name}: ${t.action} - ${
+                                    t.details || ""
+                                  } (${new Date(
+                                    t.timestamp
+                                  ).toLocaleString()})</li>`
+                              )
+                              .join("")}
+                        </ul>
+                    </div>
+                `;
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  document
+    .getElementById("proposal-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append("title", document.getElementById("p-title").value);
+      formData.append("description", document.getElementById("p-desc").value);
+      formData.append(
+        "proposal_file",
+        document.getElementById("p-file").files[0]
+      );
+
+      try {
+        await axios.post(`${API_URL}/proposals/`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        hideUploadModal();
+        loadProposals();
+      } catch (err) {
+        alert("Submission failed");
+      }
+    });
+
+  document
+    .getElementById("budget-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("budget-proposal-id").value;
+      const formData = new FormData();
+      if (document.getElementById("b-revised").files[0])
+        formData.append(
+          "revised_file",
+          document.getElementById("b-revised").files[0]
+        );
+      if (document.getElementById("b-budget").files[0])
+        formData.append(
+          "budget_file",
+          document.getElementById("b-budget").files[0]
+        );
+
+      try {
+        await axios.post(
+          `${API_URL}/proposals/${id}/upload_budget/`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+        hideBudgetModal();
+        loadProposals();
+      } catch (err) {
+        alert("Upload failed");
+      }
+    });
+
+  loadProposals();
+</script>
+{% endblock %}

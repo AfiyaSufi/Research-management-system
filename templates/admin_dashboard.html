@@ -1,0 +1,118 @@
+{% extends 'base.html' %} {% block content %}
+<h2>Admin Dashboard</h2>
+<div id="proposals-list"></div>
+
+{% endblock %} {% block scripts %}
+<script>
+  async function loadProposals() {
+    try {
+      const res = await axios.get(`${API_URL}/proposals/`);
+      const list = document.getElementById("proposals-list");
+      list.innerHTML = "";
+      res.data.forEach((p) => {
+        let actionHtml = "";
+        if (
+          p.status === "PENDING" ||
+          (p.status === "ACCEPTED" && p.current_step < 6)
+        ) {
+          // Logic check: status might be PENDING usually
+          // Actually my model defaults to PENDING.
+          if (p.status !== "REJECTED" && p.status !== "ACCEPTED") {
+            if (p.current_step === 1) {
+              actionHtml = `
+                                <button class="btn btn-success btn-sm" onclick="action(${p.id}, 'format_check', {accepted: true})">Accept Format</button>
+                                <button class="btn btn-danger btn-sm" onclick="action(${p.id}, 'format_check', {accepted: false})">Reject</button>
+                            `;
+            } else if (p.current_step === 2) {
+              actionHtml = `
+                                <input type="number" id="plag-${p.id}" placeholder="%" style="width: 60px">
+                                <button class="btn btn-primary btn-sm" onclick="submitPlagiarism(${p.id})">Submit %</button>
+                            `;
+            } else if (p.current_step === 3) {
+              actionHtml = `
+                                <input type="number" id="m1-${p.id}" placeholder="M1" style="width: 50px">
+                                <input type="number" id="m2-${p.id}" placeholder="M2" style="width: 50px">
+                                <button class="btn btn-primary btn-sm" onclick="submitMarks(${p.id})">Submit Marks</button>
+                            `;
+            } else if (p.current_step === 4) {
+              actionHtml = `
+                                <button class="btn btn-success btn-sm" onclick="action(${p.id}, 'seminar_decision', {attended: true, accepted: true})">Accept Seminar</button>
+                                <button class="btn btn-warning btn-sm" onclick="action(${p.id}, 'seminar_decision', {attended: true, accepted: false})">Reject (Faculty)</button>
+                                <button class="btn btn-danger btn-sm" onclick="action(${p.id}, 'seminar_decision', {attended: false, accepted: false})">Absent</button>
+                            `;
+            } else if (p.current_step === 5) {
+              actionHtml = `
+                                <button class="btn btn-success btn-sm" onclick="action(${p.id}, 'committee_decision', {accepted: true})">Approve Budget</button>
+                                <button class="btn btn-danger btn-sm" onclick="action(${p.id}, 'committee_decision', {accepted: false})">Reject</button>
+                            `;
+            } else if (p.current_step === 6) {
+              actionHtml = `
+                                <button class="btn btn-success btn-sm" onclick="action(${p.id}, 'rector_decision', {accepted: true})">Final Approve</button>
+                                <button class="btn btn-danger btn-sm" onclick="action(${p.id}, 'rector_decision', {accepted: false})">Reject</button>
+                            `;
+            }
+          }
+        }
+
+        list.innerHTML += `
+                    <div class="step-card">
+                        <h5>${p.title} <span class="badge bg-secondary">${
+          p.status
+        }</span> (Step ${p.current_step})</h5>
+                        <p>Participant: ${p.participant_name}</p>
+                        <p><a href="${
+                          p.proposal_file
+                        }" target="_blank">View Proposal</a></p>
+                        ${
+                          p.budget_file
+                            ? `<p><a href="${p.budget_file}" target="_blank">View Budget</a></p>`
+                            : ""
+                        }
+                        <div class="mt-2">
+                            ${actionHtml}
+                        </div>
+                        <hr>
+                        <details>
+                            <summary>Timeline</summary>
+                            <ul>
+                                ${p.timeline
+                                  .map(
+                                    (t) =>
+                                      `<li>${t.step_name}: ${t.action} - ${
+                                        t.details || ""
+                                      }</li>`
+                                  )
+                                  .join("")}
+                            </ul>
+                        </details>
+                    </div>
+                `;
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function action(id, endpoint, data) {
+    try {
+      await axios.post(`${API_URL}/proposals/${id}/${endpoint}/`, data);
+      loadProposals();
+    } catch (err) {
+      alert("Action failed");
+    }
+  }
+
+  function submitPlagiarism(id) {
+    const val = document.getElementById(`plag-${id}`).value;
+    action(id, "plagiarism_check", { percentage: val });
+  }
+
+  function submitMarks(id) {
+    const m1 = document.getElementById(`m1-${id}`).value;
+    const m2 = document.getElementById(`m2-${id}`).value;
+    action(id, "evaluate", { mark1: m1, mark2: m2 });
+  }
+
+  loadProposals();
+</script>
+{% endblock %}

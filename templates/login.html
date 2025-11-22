@@ -1,0 +1,106 @@
+{% extends 'base.html' %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Login</div>
+      <div class="card-body">
+        <form id="login-form">
+          <div class="mb-3">
+            <label>Username</label>
+            <input type="text" id="username" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label>Password</label>
+            <input
+              type="password"
+              id="password"
+              class="form-control"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        <hr />
+        <h5>Register</h5>
+        <form id="register-form">
+          <div class="mb-3">
+            <label>Username</label>
+            <input
+              type="text"
+              id="reg-username"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label>Email</label>
+            <input type="email" id="reg-email" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label>Password</label>
+            <input
+              type="password"
+              id="reg-password"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label>Role</label>
+            <select id="reg-role" class="form-control">
+              <option value="PARTICIPANT">Participant</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success">Register</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document
+    .getElementById("login-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        const res = await axios.post(`${API_URL}/users/login/`, {
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value,
+        });
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("role", res.data.role);
+        localStorage.setItem(
+          "username",
+          document.getElementById("username").value
+        );
+
+        if (res.data.role === "ADMIN") {
+          window.location.href = "/admin-dashboard/";
+        } else {
+          window.location.href = "/dashboard/";
+        }
+      } catch (err) {
+        alert("Login failed");
+      }
+    });
+
+  document
+    .getElementById("register-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await axios.post(`${API_URL}/users/register/`, {
+          username: document.getElementById("reg-username").value,
+          email: document.getElementById("reg-email").value,
+          password: document.getElementById("reg-password").value,
+          role: document.getElementById("reg-role").value,
+        });
+        alert("Registration successful! Please login.");
+      } catch (err) {
+        alert("Registration failed");
+      }
+    });
+</script>
+{% endblock %}
