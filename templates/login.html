@@ -1,106 +1,756 @@
 {% extends 'base.html' %} {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">Login</div>
-      <div class="card-body">
-        <form id="login-form">
+<div class="auth-page">
+  <div class="auth-wrapper">
+    <!-- Left Feature Panel -->
+    <div class="auth-hero">
+      <div class="brand">
+        <div class="brand-mark">RMS</div>
+        <div class="brand-text">
+          <span class="brand-name">Research Management System</span>
+          <small>Submit, review, and track proposals</small>
+        </div>
+      </div>
+
+      <div class="hero-body">
+        <p class="hero-kicker">Trusted by faculties and researchers</p>
+        <h2 class="hero-title">Manage Your Research Journey Seamlessly.</h2>
+        <ul class="hero-points">
+          <li>Upload proposals, revisions, and budgets in one place.</li>
+          <li>Transparent 6-step review with clear status updates.</li>
+          <li>Email-ready workflow for evaluators and committees.</li>
+        </ul>
+
+        <div class="hero-avatars">
+          <div class="avatar">A</div>
+          <div class="avatar">B</div>
+          <div class="avatar">C</div>
+          <span class="avatar-text">Teams collaborating right now</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="auth-form-panel">
+      <div class="lang-select">English (USA)</div>
+
+      <!-- Register View -->
+      <div class="form-view" data-view="register">
+        <h3 class="form-title">Create Account</h3>
+        <p class="form-subtitle">Get started in under a minute.</p>
+
+        <div id="register-alert" class="alert d-none" role="alert"></div>
+
+        <form id="register-form" novalidate>
           <div class="mb-3">
-            <label>Username</label>
-            <input type="text" id="username" class="form-control" required />
-          </div>
-          <div class="mb-3">
-            <label>Password</label>
-            <input
-              type="password"
-              id="password"
-              class="form-control"
-              required
-            />
-          </div>
-          <button type="submit" class="btn btn-primary">Login</button>
-        </form>
-        <hr />
-        <h5>Register</h5>
-        <form id="register-form">
-          <div class="mb-3">
-            <label>Username</label>
+            <label class="form-label">Full Name</label>
             <input
               type="text"
               id="reg-username"
-              class="form-control"
+              class="form-control form-control-clean"
+              placeholder="Enter your full name"
               required
+              minlength="3"
+              autocomplete="username"
             />
+            <div class="invalid-feedback">
+              Please enter at least 3 characters.
+            </div>
           </div>
+
           <div class="mb-3">
-            <label>Email</label>
-            <input type="email" id="reg-email" class="form-control" />
-          </div>
-          <div class="mb-3">
-            <label>Password</label>
+            <label class="form-label">Email Address</label>
             <input
-              type="password"
-              id="reg-password"
-              class="form-control"
+              type="email"
+              id="reg-email"
+              class="form-control form-control-clean"
+              placeholder="Enter your email"
+              required
+              autocomplete="email"
+            />
+            <div class="invalid-feedback">Enter a valid email address.</div>
+          </div>
+
+          <div class="mb-3 position-relative">
+            <label class="form-label">Password</label>
+            <div class="clean-input">
+              <input
+                type="password"
+                id="reg-password"
+                class="form-control form-control-clean"
+                placeholder="Create a password"
+                required
+                minlength="8"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                data-target="reg-password"
+                aria-label="Toggle password visibility"
+              >
+                <svg
+                  class="eye-open"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg
+                  class="eye-closed d-none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                  ></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+            <div class="invalid-feedback">
+              Password must be at least 8 characters.
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Account Type</label>
+            <div class="role-toggle" id="role-toggle">
+              <button
+                type="button"
+                data-role="PARTICIPANT"
+                class="role-pill active"
+              >
+                Participant
+              </button>
+              <button type="button" data-role="ADMIN" class="role-pill">
+                Admin
+              </button>
+            </div>
+          </div>
+
+          <div class="form-check mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              value="1"
+              id="terms-check"
               required
             />
+            <label class="form-check-label" for="terms-check">
+              I agree to the <a href="#">terms of service</a> and
+              <a href="#">privacy policy</a>.
+            </label>
+            <div class="invalid-feedback">
+              Please accept the terms to continue.
+            </div>
           </div>
-          <div class="mb-3">
-            <label>Role</label>
-            <select id="reg-role" class="form-control">
-              <option value="PARTICIPANT">Participant</option>
-              <option value="ADMIN">Admin</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn-success">Register</button>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-100 auth-button"
+            id="register-btn"
+          >
+            <span class="btn-text">Sign Up</span>
+            <span
+              class="spinner-border spinner-border-sm d-none"
+              role="status"
+              aria-hidden="true"
+            ></span>
+          </button>
         </form>
+
+        <div class="divider"><span>Or Sign Up With</span></div>
+        <div class="social-row">
+          <button class="social-btn" type="button">G</button>
+          <button class="social-btn" type="button">F</button>
+          <button class="social-btn" type="button">In</button>
+          <button class="social-btn" type="button">X</button>
+        </div>
+
+        <p class="switch-link">
+          Already have an account? <a href="#" data-switch="login">Sign in</a>
+        </p>
+      </div>
+
+      <!-- Login View -->
+      <div class="form-view d-none" data-view="login">
+        <h3 class="form-title">Welcome Back</h3>
+        <p class="form-subtitle">Sign in to continue.</p>
+
+        <div id="login-alert" class="alert d-none" role="alert"></div>
+
+        <form id="login-form" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input
+              type="text"
+              id="username"
+              class="form-control form-control-clean"
+              placeholder="Enter your username"
+              required
+              autocomplete="username"
+            />
+            <div class="invalid-feedback">Please enter your username.</div>
+          </div>
+
+          <div class="mb-2 position-relative">
+            <label class="form-label">Password</label>
+            <div class="clean-input">
+              <input
+                type="password"
+                id="password"
+                class="form-control form-control-clean"
+                placeholder="Enter your password"
+                required
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                data-target="password"
+                aria-label="Toggle password visibility"
+              >
+                <svg
+                  class="eye-open"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg
+                  class="eye-closed d-none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                  ></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+            <div class="invalid-feedback">Please enter your password.</div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="remember-me"
+              />
+              <label class="form-check-label" for="remember-me"
+                >Remember me</label
+              >
+            </div>
+            <a href="#" class="link-muted">Forgot password?</a>
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-100 auth-button"
+            id="login-btn"
+          >
+            <span class="btn-text">Sign In</span>
+            <span
+              class="spinner-border spinner-border-sm d-none"
+              role="status"
+              aria-hidden="true"
+            ></span>
+          </button>
+        </form>
+
+        <div class="divider"><span>Or Sign In With</span></div>
+        <div class="social-row">
+          <button class="social-btn" type="button">G</button>
+          <button class="social-btn" type="button">F</button>
+          <button class="social-btn" type="button">In</button>
+          <button class="social-btn" type="button">X</button>
+        </div>
+
+        <p class="switch-link">
+          New here? <a href="#" data-switch="register">Create account</a>
+        </p>
       </div>
     </div>
   </div>
 </div>
+{% endblock %} {% block styles %}
+<style>
+  body {
+    background: #f5f6fb;
+  }
+  .auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 12px;
+  }
+  .auth-wrapper {
+    width: 100%;
+    max-width: 1120px;
+    background: #fff;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.15);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 620px;
+  }
+  .auth-hero {
+    background: linear-gradient(160deg, #7f89ff 0%, #6f7cf7 50%, #7f89ff 100%);
+    color: #fff;
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.18);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .brand-text small {
+    color: rgba(255, 255, 255, 0.8);
+    display: block;
+    font-size: 0.85rem;
+  }
+  .brand-name {
+    font-weight: 700;
+    display: block;
+  }
+  .hero-body {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .hero-kicker {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.78rem;
+    opacity: 0.8;
+    margin: 0;
+  }
+  .hero-title {
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0;
+    font-size: 1.9rem;
+  }
+  .hero-points {
+    padding-left: 18px;
+    margin: 0;
+    display: grid;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .hero-points li {
+    line-height: 1.5;
+  }
+  .hero-avatars {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+  }
+  .avatar-text {
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  .auth-form-panel {
+    padding: 48px 52px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .lang-select {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    font-size: 0.9rem;
+    color: #9ca3af;
+  }
+  .form-title {
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+  }
+  .form-subtitle {
+    color: #6b7280;
+    margin-bottom: 24px;
+  }
+  .form-control-clean {
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 34px;
+    box-shadow: none !important;
+  }
+  .form-control-clean:focus {
+    border-color: #7f89ff;
+  }
+  .clean-input {
+    position: relative;
+  }
+  .clean-input .toggle-password {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+  }
+  .toggle-password:hover {
+    color: #7f89ff;
+  }
+  .role-toggle {
+    display: inline-flex;
+    background: #f3f4f6;
+    border-radius: 12px;
+    padding: 4px;
+    gap: 6px;
+  }
+  .role-pill {
+    border: none;
+    background: transparent;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    color: #6b7280;
+    transition: all 0.2s ease;
+  }
+  .role-pill.active {
+    background: #fff;
+    color: #7f89ff;
+    box-shadow: 0 6px 16px rgba(127, 137, 255, 0.25);
+  }
+  .auth-button {
+    background: #5a63ea;
+    border: none;
+    padding: 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    box-shadow: 0 15px 30px rgba(90, 99, 234, 0.35);
+    margin-top: 10px;
+  }
+  .auth-button:hover {
+    background: #5058d6;
+  }
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #9ca3af;
+    margin: 20px 0;
+  }
+  .divider::before,
+  .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+  .social-row {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+  .social-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: #6b7280;
+    transition: all 0.2s ease;
+  }
+  .social-btn:hover {
+    color: #5a63ea;
+    border-color: #cdd4ff;
+    box-shadow: 0 10px 22px rgba(90, 99, 234, 0.18);
+  }
+  .switch-link {
+    margin-top: 18px;
+    color: #6b7280;
+  }
+  .switch-link a {
+    color: #5a63ea;
+    font-weight: 600;
+  }
+  .link-muted {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+  .link-muted:hover {
+    color: #5a63ea;
+  }
+  .alert {
+    border-radius: 12px;
+    border: none;
+  }
+  .alert-success {
+    background: #f0fdf4;
+    color: #166534;
+  }
+  .alert-danger {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .form-check-input:checked {
+    background-color: #5a63ea;
+    border-color: #5a63ea;
+  }
+
+  @media (max-width: 992px) {
+    .auth-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .auth-hero {
+      min-height: 320px;
+    }
+  }
+  @media (max-width: 576px) {
+    .auth-form-panel {
+      padding: 32px 22px;
+    }
+    .auth-hero {
+      padding: 32px 24px;
+    }
+  }
+</style>
 {% endblock %} {% block scripts %}
 <script>
-  document
-    .getElementById("login-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      try {
-        const res = await axios.post(`${API_URL}/users/login/`, {
-          username: document.getElementById("username").value,
-          password: document.getElementById("password").value,
-        });
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("role", res.data.role);
-        localStorage.setItem(
-          "username",
-          document.getElementById("username").value
-        );
+  // ===== Auto-redirect if already logged in =====
+  (function () {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
-        if (res.data.role === "ADMIN") {
-          window.location.href = "/admin-dashboard/";
-        } else {
-          window.location.href = "/dashboard/";
-        }
-      } catch (err) {
-        alert("Login failed");
+    if (token && role) {
+      const upperRole = role.toUpperCase();
+      if (upperRole === "ADMIN") {
+        window.location.href = "/admin-dashboard/";
+        return;
+      } else if (upperRole === "PARTICIPANT") {
+        window.location.href = "/dashboard/";
+        return;
+      }
+    }
+  })();
+
+  const roleToggle = document.getElementById("role-toggle");
+  let selectedRole = "PARTICIPANT";
+
+  if (roleToggle) {
+    roleToggle.addEventListener("click", (e) => {
+      if (e.target.matches("button[data-role]")) {
+        selectedRole = e.target.getAttribute("data-role");
+        roleToggle
+          .querySelectorAll(".role-pill")
+          .forEach((btn) => btn.classList.remove("active"));
+        e.target.classList.add("active");
       }
     });
+  }
 
+  // View switcher
+  function switchView(target) {
+    document.querySelectorAll(".form-view").forEach((view) => {
+      view.classList.toggle(
+        "d-none",
+        view.getAttribute("data-view") !== target
+      );
+    });
+  }
+
+  document.querySelectorAll("[data-switch]").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      switchView(link.getAttribute("data-switch"));
+    });
+  });
+
+  // Toggle password visibility
+  document.querySelectorAll(".toggle-password").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+      const input = document.getElementById(targetId);
+      const eyeOpen = btn.querySelector(".eye-open");
+      const eyeClosed = btn.querySelector(".eye-closed");
+      if (input.type === "password") {
+        input.type = "text";
+        eyeOpen.classList.add("d-none");
+        eyeClosed.classList.remove("d-none");
+      } else {
+        input.type = "password";
+        eyeOpen.classList.remove("d-none");
+        eyeClosed.classList.add("d-none");
+      }
+    });
+  });
+
+  function showAlert(containerId, message, type) {
+    const alert = document.getElementById(containerId);
+    alert.className = `alert alert-${type}`;
+    alert.textContent = message;
+    alert.classList.remove("d-none");
+    setTimeout(() => alert.classList.add("d-none"), 4000);
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    const text = btn.querySelector(".btn-text");
+    const spinner = btn.querySelector(".spinner-border");
+    btn.disabled = loading;
+    text.classList.toggle("d-none", loading);
+    spinner.classList.toggle("d-none", !loading);
+  }
+
+  // Register form
   document
     .getElementById("register-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
+      const form = e.target;
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
+        return;
+      }
+
+      setLoading("register-btn", true);
       try {
         await axios.post(`${API_URL}/users/register/`, {
-          username: document.getElementById("reg-username").value,
-          email: document.getElementById("reg-email").value,
+          username: document.getElementById("reg-username").value.trim(),
+          email: document.getElementById("reg-email").value.trim(),
           password: document.getElementById("reg-password").value,
-          role: document.getElementById("reg-role").value,
+          role: selectedRole,
         });
-        alert("Registration successful! Please login.");
+
+        showAlert(
+          "register-alert",
+          "Account created successfully! Please sign in.",
+          "success"
+        );
+        form.reset();
+        form.classList.remove("was-validated");
+        setTimeout(() => switchView("login"), 800);
       } catch (err) {
-        alert("Registration failed");
+        setLoading("register-btn", false);
+        let message = "Registration failed. Please try again.";
+        if (err.response?.data) {
+          const errors = err.response.data;
+          if (errors.username) message = errors.username[0];
+          else if (errors.email) message = errors.email[0];
+          else if (errors.password) message = errors.password[0];
+        }
+        showAlert("register-alert", message, "danger");
+      } finally {
+        setLoading("register-btn", false);
       }
     });
+
+  // Login form
+  document
+    .getElementById("login-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
+        return;
+      }
+
+      setLoading("login-btn", true);
+      try {
+        const res = await axios.post(`${API_URL}/users/login/`, {
+          username: document.getElementById("username").value.trim(),
+          password: document.getElementById("password").value,
+        });
+
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("role", res.data.role);
+        localStorage.setItem(
+          "username",
+          document.getElementById("username").value.trim()
+        );
+
+        showAlert("login-alert", "Login successful! Redirecting...", "success");
+        setTimeout(() => {
+          if (res.data.role === "ADMIN") {
+            window.location.href = "/admin-dashboard/";
+          } else {
+            window.location.href = "/dashboard/";
+          }
+        }, 500);
+      } catch (err) {
+        setLoading("login-btn", false);
+        const message =
+          err.response?.data?.non_field_errors?.[0] ||
+          "Invalid username or password. Please try again.";
+        showAlert("login-alert", message, "danger");
+      } finally {
+        setLoading("login-btn", false);
+      }
+    });
+
+  // Default view
+  switchView("register");
 </script>
 {% endblock %}

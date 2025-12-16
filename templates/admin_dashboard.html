@@ -1,118 +1,4081 @@
-{% extends 'base.html' %} {% block content %}
-<h2>Admin Dashboard</h2>
-<div id="proposals-list"></div>
+{% extends 'base.html' %} {% block styles %}
+<style>
+  /* ===== CSS Variables (RMS Design System) ===== */
+  :root {
+    --primary: #5a63ea;
+    --primary-dark: #4f56d1;
+    --primary-light: #7f89ff;
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --sidebar-bg: linear-gradient(180deg, #1e1e2d 0%, #1a1a27 100%);
+    --sidebar-width: 260px;
+    --header-height: 70px;
+    --text-dark: #0f172a;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --border-color: #e5e7eb;
+    --bg-light: #f5f6fb;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+  }
 
+  /* ===== Layout ===== */
+  body {
+    background: var(--bg-light);
+    overflow-x: hidden;
+  }
+
+  #main-navbar {
+    display: none !important;
+  }
+
+  .admin-layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar-brand {
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar-brand-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+
+  .sidebar-brand-text {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .sidebar-brand-text small {
+    display: block;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+    font-size: 0.75rem;
+  }
+
+  .sidebar-nav {
+    padding: 20px 16px;
+    flex: 1;
+  }
+
+  .nav-section-title {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    padding: 16px 12px 8px;
+    margin: 0;
+  }
+
+  .nav-item {
+    margin-bottom: 4px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.65);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .nav-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+
+  .nav-link.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(90, 99, 234, 0.4);
+  }
+
+  .nav-link svg {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+  }
+
+  .nav-link.active svg {
+    opacity: 1;
+  }
+
+  .nav-badge {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .nav-link.active .nav-badge {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  .sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+  }
+
+  .sidebar-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--primary);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .sidebar-user-info {
+    flex: 1;
+  }
+
+  .sidebar-user-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .sidebar-user-role {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+  }
+
+  /* ===== Main Content ===== */
+  .main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-header {
+    height: var(--header-height);
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 1.4rem;
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .header-search {
+    position: relative;
+  }
+
+  .header-search input {
+    width: 280px;
+    padding: 10px 16px 10px 42px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-light);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+
+  .header-search input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(90, 99, 234, 0.1);
+  }
+
+  .header-search svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    width: 18px;
+    height: 18px;
+  }
+
+  .header-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .header-btn:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .header-btn .badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.65rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .btn-logout {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-logout:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
+  }
+
+  /* ===== Page Content ===== */
+  .page-content {
+    padding: 32px;
+    flex: 1;
+  }
+
+  .tab-content-section {
+    display: none;
+  }
+
+  .tab-content-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ===== Cards ===== */
+  .card {
+    background: #fff;
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .card-body {
+    padding: 24px;
+  }
+
+  /* ===== Buttons ===== */
+  .btn-primary {
+    background: var(--primary);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(90, 99, 234, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+  }
+
+  .btn-outline-primary {
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    background: transparent;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline-primary:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* ===== Tables ===== */
+  .table {
+    margin: 0;
+  }
+
+  .table thead th {
+    background: var(--bg-light);
+    border: none;
+    padding: 14px 16px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .table tbody td {
+    padding: 16px;
+    vertical-align: middle;
+    border-color: var(--border-color);
+    color: var(--text-dark);
+  }
+
+  .table tbody tr:hover {
+    background: rgba(90, 99, 234, 0.03);
+  }
+
+  /* ===== Status Badges ===== */
+  .status-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .status-pending {
+    background: #fef3c7;
+    color: #d97706;
+  }
+  .status-pending::before {
+    background: #f59e0b;
+  }
+
+  .status-accepted {
+    background: #d1fae5;
+    color: #059669;
+  }
+  .status-accepted::before {
+    background: #10b981;
+  }
+
+  .status-rejected {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+  .status-rejected::before {
+    background: #ef4444;
+  }
+
+  .status-active {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+  .status-active::before {
+    background: #3b82f6;
+  }
+
+  .status-closed {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+  .status-closed::before {
+    background: #9ca3af;
+  }
+
+  /* ===== Step Badges ===== */
+  .step-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--bg-light);
+    color: var(--text-muted);
+  }
+
+  .step-badge.current {
+    background: linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--primary-light) 100%
+    );
+    color: #fff;
+  }
+
+  /* ===== Modals ===== */
+  .modal-content {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid var(--border-color);
+    padding: 24px 28px;
+  }
+
+  .modal-title {
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+
+  .modal-body {
+    padding: 28px;
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--border-color);
+    padding: 20px 28px;
+  }
+
+  /* ===== Form Controls ===== */
+  .form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+  }
+
+  .form-control,
+  .form-select {
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(90, 99, 234, 0.1);
+  }
+
+  /* ===== Toast Notifications ===== */
+  .toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 380px;
+  }
+
+  .toast {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+    position: relative;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .toast.hiding {
+    animation: slideOut 0.3s ease forwards;
+  }
+
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  .toast-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+  }
+
+  .toast-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+  }
+
+  .toast-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+  }
+
+  .toast-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+  }
+
+  .toast-body {
+    padding: 16px 20px;
+    padding-right: 40px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-weight: 500;
+  }
+
+  .toast-body svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .toast-dismiss {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+  }
+
+  .toast-dismiss:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.4);
+    animation: progressShrink 4s linear forwards;
+  }
+
+  @keyframes progressShrink {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0%;
+    }
+  }
+
+  /* ===== Stat Cards ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 1200px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .stat-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .stat-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .stat-icon.primary {
+    background: linear-gradient(
+      135deg,
+      rgba(90, 99, 234, 0.15) 0%,
+      rgba(127, 137, 255, 0.15) 100%
+    );
+    color: var(--primary);
+  }
+
+  .stat-icon.warning {
+    background: linear-gradient(
+      135deg,
+      rgba(245, 158, 11, 0.15) 0%,
+      rgba(251, 191, 36, 0.15) 100%
+    );
+    color: var(--warning);
+  }
+
+  .stat-icon.success {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.15) 0%,
+      rgba(52, 211, 153, 0.15) 100%
+    );
+    color: var(--success);
+  }
+
+  .stat-icon.danger {
+    background: linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.15) 0%,
+      rgba(248, 113, 113, 0.15) 100%
+    );
+    color: var(--danger);
+  }
+
+  .stat-content {
+    flex: 1;
+  }
+
+  .stat-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.2;
+  }
+
+  .stat-change {
+    font-size: 0.8rem;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .stat-change.up {
+    color: var(--success);
+  }
+
+  .stat-change.down {
+    color: var(--danger);
+  }
+
+  /* ===== Step Progress Cards ===== */
+  .step-progress-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 1200px) {
+    .step-progress-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .step-progress-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .step-progress-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+  }
+
+  .step-progress-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+
+  .step-progress-card .step-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary);
+  }
+
+  .step-progress-card .step-name {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .step-progress-card .step-count {
+    margin-top: 8px;
+    padding: 4px 10px;
+    background: var(--bg-light);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    display: inline-block;
+  }
+
+  /* ===== Recent Table ===== */
+  .recent-section {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  .view-all-link {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .view-all-link:hover {
+    text-decoration: underline;
+  }
+
+  /* ===== Empty State ===== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state svg {
+    width: 80px;
+    height: 80px;
+    color: var(--border-color);
+    margin-bottom: 20px;
+  }
+
+  .empty-state h5 {
+    color: var(--text-dark);
+    margin-bottom: 8px;
+  }
+
+  /* ===== Loading Spinner ===== */
+  .loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* ===== Tab Toolbar ===== */
+  .tab-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .tab-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .tab-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .filter-select {
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    background: #fff;
+    min-width: 150px;
+  }
+
+  .search-input {
+    padding: 10px 16px;
+    padding-left: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    background: #fff;
+    min-width: 250px;
+    position: relative;
+  }
+
+  .search-wrapper {
+    position: relative;
+  }
+
+  .search-wrapper svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+  }
+
+  /* ===== Action Buttons ===== */
+  .btn-action {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-action.edit {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+  }
+
+  .btn-action.edit:hover {
+    background: rgba(59, 130, 246, 0.2);
+  }
+
+  .btn-action.delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+  }
+
+  .btn-action.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-action.view {
+    background: rgba(90, 99, 234, 0.1);
+    color: var(--primary);
+  }
+
+  .btn-action.view:hover {
+    background: rgba(90, 99, 234, 0.2);
+  }
+
+  /* ===== Toggle Switch ===== */
+  .toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    display: inline-block;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 26px;
+  }
+
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+  }
+
+  .toggle-switch input:checked + .toggle-slider {
+    background: var(--primary);
+  }
+
+  .toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+  }
+
+  /* ===== Form Groups ===== */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+  }
+
+  .form-group .form-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* ===== Action Cell ===== */
+  .action-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ===== Table Clickable Row ===== */
+  .table tbody tr {
+    transition: background-color 0.2s ease;
+  }
+
+  .table tbody tr:hover {
+    background-color: rgba(90, 99, 234, 0.04);
+  }
+
+  /* ===== Expand Button ===== */
+  .btn-expand {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--bg-light);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .btn-expand:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-expand svg {
+    transition: transform 0.2s ease;
+  }
+
+  .btn-expand.expanded svg {
+    transform: rotate(180deg);
+  }
+
+  /* ===== Proposal Action Panel ===== */
+  .proposal-action-panel {
+    background: #f8f9fc;
+  }
+
+  .proposal-action-panel > td {
+    padding: 0 !important;
+  }
+
+  .action-panel-content {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--primary);
+  }
+
+  .panel-section {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .panel-info {
+    flex: 1;
+    min-width: 300px;
+  }
+
+  .panel-info h6 {
+    color: var(--text-dark);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .panel-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ===== Evaluator List ===== */
+  .evaluator-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .evaluator-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+  }
+
+  .evaluator-item span:first-child {
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .evaluator-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* ===== Input Group in Panel ===== */
+  .panel-actions .input-group {
+    flex-shrink: 0;
+  }
+
+  /* ===== Library Stat Cards ===== */
+  .library-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .library-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    padding: 20px 28px;
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
+    min-width: 180px;
+  }
+
+  .library-stat-card.accepted {
+    border-left: 4px solid var(--success);
+  }
+
+  .library-stat-card.rejected {
+    border-left: 4px solid var(--danger);
+  }
+
+  .library-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .library-stat-card.accepted .library-stat-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+  }
+
+  .library-stat-card.rejected .library-stat-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+  }
+
+  .library-stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1;
+  }
+
+  .library-stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ===== Timeline ===== */
+  .timeline-list {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  .timeline-list::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--border-color);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 16px;
+  }
+
+  .timeline-item:last-child {
+    padding-bottom: 0;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -24px;
+    top: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--border-color);
+    border: 2px solid #fff;
+  }
+
+  .timeline-dot.accepted {
+    background: var(--success);
+  }
+
+  .timeline-dot.rejected {
+    background: var(--danger);
+  }
+
+  .timeline-content {
+    font-size: 0.9rem;
+  }
+
+  /* ===== Detail Modal Sections ===== */
+  .detail-section {
+    background: var(--bg-light);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+
+  .detail-section-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .detail-section-title::before {
+    content: "";
+    width: 4px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+
+  .detail-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+  }
+
+  .detail-item:last-child {
+    border-bottom: none;
+  }
+
+  .detail-label {
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-right: 8px;
+  }
+
+  .detail-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 992px) {
+    .sidebar {
+      transform: translateX(-100%);
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .main-content {
+      margin-left: 0;
+    }
+    .header-search input {
+      width: 200px;
+    }
+    .tab-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .tab-toolbar-left,
+    .tab-toolbar-right {
+      flex-wrap: wrap;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">RMS</div>
+      <div class="sidebar-brand-text">
+        Research Management
+        <small>Admin Portal</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <p class="nav-section-title">Main Menu</p>
+
+      <div class="nav-item">
+        <a class="nav-link active" data-tab="dashboard">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="7" height="9"></rect>
+            <rect x="14" y="3" width="7" height="5"></rect>
+            <rect x="14" y="12" width="7" height="9"></rect>
+            <rect x="3" y="16" width="7" height="5"></rect>
+          </svg>
+          Dashboard
+        </a>
+      </div>
+
+      <div class="nav-item">
+        <a class="nav-link" data-tab="notices">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            ></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Notices
+          <span class="nav-badge" id="notices-count">0</span>
+        </a>
+      </div>
+
+      <div class="nav-item">
+        <a class="nav-link" data-tab="proposals">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+            ></path>
+          </svg>
+          Proposals
+          <span class="nav-badge" id="proposals-count">0</span>
+        </a>
+      </div>
+
+      <div class="nav-item">
+        <a class="nav-link" data-tab="library">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path
+              d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+            ></path>
+          </svg>
+          Library
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-username">Admin User</div>
+          <div class="sidebar-user-role">Administrator</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Header -->
+    <header class="main-header">
+      <h1 class="header-title" id="page-title">Dashboard</h1>
+
+      <div class="header-actions">
+        <div class="header-search">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search proposals..."
+            id="global-search"
+          />
+        </div>
+
+        <button class="header-btn" title="Notifications">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="badge" id="notification-badge" style="display: none"
+            >0</span
+          >
+        </button>
+
+        <button class="btn-logout" onclick="logout()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      <!-- Dashboard Tab -->
+      <section class="tab-content-section active" id="tab-dashboard">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+        </div>
+      </section>
+
+      <!-- Notices Tab -->
+      <section class="tab-content-section" id="tab-notices">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+        </div>
+      </section>
+
+      <!-- Proposals Tab -->
+      <section class="tab-content-section" id="tab-proposals">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+        </div>
+      </section>
+
+      <!-- Library Tab -->
+      <section class="tab-content-section" id="tab-library">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Notice Modal -->
+<div
+  class="modal fade"
+  id="noticeModal"
+  tabindex="-1"
+  aria-labelledby="noticeModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="noticeModalLabel">Create Notice</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <form id="noticeForm">
+        <div class="modal-body">
+          <input type="hidden" id="notice-id" value="" />
+
+          <div class="form-group">
+            <label for="notice-title">Title *</label>
+            <input
+              type="text"
+              class="form-control"
+              id="notice-title"
+              placeholder="Enter notice title"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="notice-description">Description</label>
+            <textarea
+              class="form-control"
+              id="notice-description"
+              rows="4"
+              placeholder="Enter notice description (optional)"
+            ></textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="notice-deadline">Submission Deadline *</label>
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  id="notice-deadline"
+                  required
+                />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="notice-status">Status</label>
+                <select class="form-select" id="notice-status">
+                  <option value="ACTIVE">Active</option>
+                  <option value="CLOSED">Closed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notice-eligibility">Eligibility Criteria</label>
+            <textarea
+              class="form-control"
+              id="notice-eligibility"
+              rows="3"
+              placeholder="Who can apply? (optional)"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="notice-requirements">Requirements</label>
+            <textarea
+              class="form-control"
+              id="notice-requirements"
+              rows="3"
+              placeholder="What documents are required? (optional)"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <span id="notice-submit-text">Create Notice</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Are you sure you want to delete
+          <strong id="delete-item-name"></strong>?
+        </p>
+        <p class="text-muted mb-0">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Modal -->
+<div
+  class="modal fade"
+  id="inviteModal"
+  tabindex="-1"
+  aria-labelledby="inviteModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="inviteModalLabel">Invite</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="invite-name">Full Name *</label>
+          <input
+            type="text"
+            class="form-control"
+            id="invite-name"
+            placeholder="Enter full name"
+            required
+          />
+        </div>
+        <div class="form-group mb-0">
+          <label for="invite-email">Email Address *</label>
+          <input
+            type="email"
+            class="form-control"
+            id="invite-email"
+            placeholder="Enter email address"
+            required
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" onclick="submitInvite()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+            ></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          Send Invitation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Reject Proposal</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group mb-0">
+          <label for="reject-reason">Rejection Reason</label>
+          <textarea
+            class="form-control"
+            id="reject-reason"
+            rows="3"
+            placeholder="Enter reason for rejection (optional)"
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          onclick="submitRejection()"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Reject Proposal
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div
+  class="modal fade"
+  id="detailModal"
+  tabindex="-1"
+  aria-labelledby="detailModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailModalLabel">Proposal Details</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body" id="detailModalBody">
+        <div class="loading-spinner"><div class="spinner"></div></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container"></div>
 {% endblock %} {% block scripts %}
 <script>
-  async function loadProposals() {
-    try {
-      const res = await axios.get(`${API_URL}/proposals/`);
-      const list = document.getElementById("proposals-list");
-      list.innerHTML = "";
-      res.data.forEach((p) => {
-        let actionHtml = "";
-        if (
-          p.status === "PENDING" ||
-          (p.status === "ACCEPTED" && p.current_step < 6)
-        ) {
-          // Logic check: status might be PENDING usually
-          // Actually my model defaults to PENDING.
-          if (p.status !== "REJECTED" && p.status !== "ACCEPTED") {
-            if (p.current_step === 1) {
-              actionHtml = `
-                                <button class="btn btn-success btn-sm" onclick="action(${p.id}, 'format_check', {accepted: true})">Accept Format</button>
-                                <button class="btn btn-danger btn-sm" onclick="action(${p.id}, 'format_check', {accepted: false})">Reject</button>
-                            `;
-            } else if (p.current_step === 2) {
-              actionHtml = `
-                                <input type="number" id="plag-${p.id}" placeholder="%" style="width: 60px">
-                                <button class="btn btn-primary btn-sm" onclick="submitPlagiarism(${p.id})">Submit %</button>
-                            `;
-            } else if (p.current_step === 3) {
-              actionHtml = `
-                                <input type="number" id="m1-${p.id}" placeholder="M1" style="width: 50px">
-                                <input type="number" id="m2-${p.id}" placeholder="M2" style="width: 50px">
-                                <button class="btn btn-primary btn-sm" onclick="submitMarks(${p.id})">Submit Marks</button>
-                            `;
-            } else if (p.current_step === 4) {
-              actionHtml = `
-                                <button class="btn btn-success btn-sm" onclick="action(${p.id}, 'seminar_decision', {attended: true, accepted: true})">Accept Seminar</button>
-                                <button class="btn btn-warning btn-sm" onclick="action(${p.id}, 'seminar_decision', {attended: true, accepted: false})">Reject (Faculty)</button>
-                                <button class="btn btn-danger btn-sm" onclick="action(${p.id}, 'seminar_decision', {attended: false, accepted: false})">Absent</button>
-                            `;
-            } else if (p.current_step === 5) {
-              actionHtml = `
-                                <button class="btn btn-success btn-sm" onclick="action(${p.id}, 'committee_decision', {accepted: true})">Approve Budget</button>
-                                <button class="btn btn-danger btn-sm" onclick="action(${p.id}, 'committee_decision', {accepted: false})">Reject</button>
-                            `;
-            } else if (p.current_step === 6) {
-              actionHtml = `
-                                <button class="btn btn-success btn-sm" onclick="action(${p.id}, 'rector_decision', {accepted: true})">Final Approve</button>
-                                <button class="btn btn-danger btn-sm" onclick="action(${p.id}, 'rector_decision', {accepted: false})">Reject</button>
-                            `;
-            }
-          }
-        }
+  // ===== Global State =====
+  // API_URL is already defined in base.html
+  let currentTab = "dashboard";
+  let proposals = [];
+  let notices = [];
+  let libraryProposals = [];
 
-        list.innerHTML += `
-                    <div class="step-card">
-                        <h5>${p.title} <span class="badge bg-secondary">${
-          p.status
-        }</span> (Step ${p.current_step})</h5>
-                        <p>Participant: ${p.participant_name}</p>
-                        <p><a href="${
-                          p.proposal_file
-                        }" target="_blank">View Proposal</a></p>
-                        ${
-                          p.budget_file
-                            ? `<p><a href="${p.budget_file}" target="_blank">View Budget</a></p>`
-                            : ""
-                        }
-                        <div class="mt-2">
-                            ${actionHtml}
-                        </div>
-                        <hr>
-                        <details>
-                            <summary>Timeline</summary>
-                            <ul>
-                                ${p.timeline
-                                  .map(
-                                    (t) =>
-                                      `<li>${t.step_name}: ${t.action} - ${
-                                        t.details || ""
-                                      }</li>`
-                                  )
-                                  .join("")}
-                            </ul>
-                        </details>
-                    </div>
-                `;
+  // ===== Initialization =====
+  document.addEventListener("DOMContentLoaded", function () {
+    checkAuth();
+    setupNavigation();
+    loadDashboard();
+  });
+
+  // ===== Authentication =====
+  function checkAuth() {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    const username = localStorage.getItem("username");
+
+    if (!token || role !== "ADMIN") {
+      window.location.href = "/login/";
+      return;
+    }
+
+    // Set user info in sidebar
+    document.getElementById("sidebar-username").textContent =
+      username || "Admin";
+    document.getElementById("user-avatar").textContent = (username || "A")
+      .charAt(0)
+      .toUpperCase();
+
+    // Setup axios defaults
+    axios.defaults.headers.common["Authorization"] = `Token ${token}`;
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("username");
+    window.location.href = "/login/";
+  }
+
+  // ===== Navigation =====
+  function setupNavigation() {
+    document.querySelectorAll(".nav-link[data-tab]").forEach((link) => {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        const tab = this.dataset.tab;
+        switchTab(tab);
       });
-    } catch (err) {
-      console.error(err);
+    });
+  }
+
+  function switchTab(tab) {
+    // Update nav active state
+    document.querySelectorAll(".nav-link").forEach((link) => {
+      link.classList.toggle("active", link.dataset.tab === tab);
+    });
+
+    // Update page title
+    const titles = {
+      dashboard: "Dashboard",
+      notices: "Notice Management",
+      proposals: "Proposal Pipeline",
+      library: "Proposal Library",
+    };
+    document.getElementById("page-title").textContent =
+      titles[tab] || "Dashboard";
+
+    // Show/hide tab content
+    document.querySelectorAll(".tab-content-section").forEach((section) => {
+      section.classList.toggle("active", section.id === `tab-${tab}`);
+    });
+
+    currentTab = tab;
+
+    // Load tab data
+    switch (tab) {
+      case "dashboard":
+        loadDashboard();
+        break;
+      case "notices":
+        loadNotices();
+        break;
+      case "proposals":
+        loadProposals();
+        break;
+      case "library":
+        loadLibrary();
+        break;
     }
   }
 
-  async function action(id, endpoint, data) {
+  // ===== Toast Notifications =====
+  function showToast(message, type = "success", duration = 4000) {
+    const container = document.querySelector(".toast-container");
+    const toast = document.createElement("div");
+    const toastId = "toast-" + Date.now();
+    toast.id = toastId;
+    toast.className = `toast toast-${type} show`;
+
+    const icons = {
+      success:
+        '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
+      error:
+        '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>',
+      warning:
+        '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>',
+      info: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>',
+    };
+
+    toast.innerHTML = `
+      <div class="toast-body">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${icons[type] || icons.info}
+        </svg>
+        <span>${message}</span>
+      </div>
+      <button class="toast-dismiss" onclick="dismissToast('${toastId}')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div class="toast-progress" style="animation-duration: ${duration}ms;"></div>
+    `;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      dismissToast(toastId);
+    }, duration);
+  }
+
+  function dismissToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast && !toast.classList.contains("hiding")) {
+      toast.classList.add("hiding");
+      setTimeout(() => toast.remove(), 300);
+    }
+  }
+
+  // ===== Utility Functions =====
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function getStatusBadge(status) {
+    const statusMap = {
+      PENDING: "pending",
+      ACCEPTED: "accepted",
+      REJECTED: "rejected",
+      ACTIVE: "active",
+      CLOSED: "closed",
+    };
+    return `<span class="status-badge status-${
+      statusMap[status] || "pending"
+    }">${status}</span>`;
+  }
+
+  function getStepBadge(step, isCurrent = false) {
+    const stepNames = {
+      1: "Format Check",
+      2: "Plagiarism",
+      3: "Evaluation",
+      4: "Seminar",
+      5: "Committee",
+      6: "Rector",
+    };
+    return `<span class="step-badge ${isCurrent ? "current" : ""}">${
+      stepNames[step] || `Step ${step}`
+    }</span>`;
+  }
+
+  // ===== Dashboard Functions =====
+  async function loadDashboard() {
+    const container = document.getElementById("tab-dashboard");
+    container.innerHTML = `<div class="loading-spinner"><div class="spinner"></div></div>`;
+
     try {
-      await axios.post(`${API_URL}/proposals/${id}/${endpoint}/`, data);
+      // Fetch all proposals and notices
+      const [proposalsRes, noticesRes] = await Promise.all([
+        axios.get(`${API_URL}/proposals/`),
+        axios.get(`${API_URL}/notices/`),
+      ]);
+
+      proposals = proposalsRes.data;
+      notices = noticesRes.data;
+
+      // Update sidebar badges
+      document.getElementById("proposals-count").textContent = proposals.filter(
+        (p) => p.status === "PENDING"
+      ).length;
+      document.getElementById("notices-count").textContent = notices.filter(
+        (n) => n.status === "ACTIVE"
+      ).length;
+
+      // Calculate stats
+      const totalProposals = proposals.length;
+      const pendingProposals = proposals.filter(
+        (p) => p.status === "PENDING"
+      ).length;
+      const acceptedProposals = proposals.filter(
+        (p) => p.status === "ACCEPTED"
+      ).length;
+      const rejectedProposals = proposals.filter(
+        (p) => p.status === "REJECTED"
+      ).length;
+
+      // Count by step (only pending)
+      const stepCounts = {
+        1: proposals.filter(
+          (p) => p.status === "PENDING" && p.current_step === 1
+        ).length,
+        2: proposals.filter(
+          (p) => p.status === "PENDING" && p.current_step === 2
+        ).length,
+        3: proposals.filter(
+          (p) => p.status === "PENDING" && p.current_step === 3
+        ).length,
+        4: proposals.filter(
+          (p) => p.status === "PENDING" && p.current_step === 4
+        ).length,
+        5: proposals.filter(
+          (p) => p.status === "PENDING" && p.current_step === 5
+        ).length,
+        6: proposals.filter(
+          (p) => p.status === "PENDING" && p.current_step === 6
+        ).length,
+      };
+
+      // Get recent proposals (last 5)
+      const recentProposals = [...proposals]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5);
+
+      container.innerHTML = `
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon primary">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Total Proposals</div>
+              <div class="stat-value">${totalProposals}</div>
+              <div class="stat-change up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                All time submissions
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon warning">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Pending Review</div>
+              <div class="stat-value">${pendingProposals}</div>
+              <div class="stat-change">
+                Awaiting action
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon success">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Accepted</div>
+              <div class="stat-value">${acceptedProposals}</div>
+              <div class="stat-change up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Fully approved
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon danger">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Rejected</div>
+              <div class="stat-value">${rejectedProposals}</div>
+              <div class="stat-change down">
+                Did not pass review
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step Progress Cards -->
+        <div class="section-header">
+          <h3 class="section-title">Pending by Step</h3>
+        </div>
+        <div class="step-progress-grid">
+          <div class="step-progress-card" onclick="filterProposalsByStep(1)">
+            <div class="step-number">${stepCounts[1]}</div>
+            <div class="step-name">Format Check</div>
+            <div class="step-count">Step 1</div>
+          </div>
+          <div class="step-progress-card" onclick="filterProposalsByStep(2)">
+            <div class="step-number">${stepCounts[2]}</div>
+            <div class="step-name">Plagiarism</div>
+            <div class="step-count">Step 2</div>
+          </div>
+          <div class="step-progress-card" onclick="filterProposalsByStep(3)">
+            <div class="step-number">${stepCounts[3]}</div>
+            <div class="step-name">Evaluation</div>
+            <div class="step-count">Step 3</div>
+          </div>
+          <div class="step-progress-card" onclick="filterProposalsByStep(4)">
+            <div class="step-number">${stepCounts[4]}</div>
+            <div class="step-name">Seminar</div>
+            <div class="step-count">Step 4</div>
+          </div>
+          <div class="step-progress-card" onclick="filterProposalsByStep(5)">
+            <div class="step-number">${stepCounts[5]}</div>
+            <div class="step-name">Committee</div>
+            <div class="step-count">Step 5</div>
+          </div>
+          <div class="step-progress-card" onclick="filterProposalsByStep(6)">
+            <div class="step-number">${stepCounts[6]}</div>
+            <div class="step-name">Rector</div>
+            <div class="step-count">Step 6</div>
+          </div>
+        </div>
+
+        <!-- Recent Proposals -->
+        <div class="recent-section">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="card-title">Recent Submissions</h4>
+              <a class="view-all-link" onclick="switchTab('proposals')">
+                View All
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </a>
+            </div>
+            <div class="card-body p-0">
+              ${
+                recentProposals.length > 0
+                  ? `
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Participant</th>
+                        <th>Notice</th>
+                        <th>Step</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${recentProposals
+                        .map(
+                          (p) => `
+                        <tr>
+                          <td>
+                            <strong>${escapeHtml(p.title)}</strong>
+                          </td>
+                          <td>${escapeHtml(p.participant_name || "N/A")}</td>
+                          <td>${escapeHtml(p.notice_title || "None")}</td>
+                          <td>${getStepBadge(
+                            p.current_step,
+                            p.status === "PENDING"
+                          )}</td>
+                          <td>${getStatusBadge(p.status)}</td>
+                          <td>${formatDate(p.created_at)}</td>
+                        </tr>
+                      `
+                        )
+                        .join("")}
+                    </tbody>
+                  </table>
+                </div>
+              `
+                  : `
+                <div class="empty-state">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <h5>No Proposals Yet</h5>
+                  <p>Proposals will appear here once participants submit them.</p>
+                </div>
+              `
+              }
+            </div>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      console.error("Failed to load dashboard:", err);
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <h5>Failed to Load Dashboard</h5>
+          <p>Please check your connection and try again.</p>
+          <button class="btn btn-primary mt-3" onclick="loadDashboard()">Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  function filterProposalsByStep(step) {
+    switchTab("proposals");
+    // Will filter to specific step when proposals tab is implemented
+    setTimeout(() => {
+      const stepFilter = document.getElementById("filter-step");
+      if (stepFilter) {
+        stepFilter.value = step;
+        stepFilter.dispatchEvent(new Event("change"));
+      }
+    }, 100);
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ===== Notice Modal & State =====
+  let noticeModal = null;
+  let deleteModal = null;
+  let inviteModal = null;
+  let rejectModal = null;
+  let detailModal = null;
+  let deleteTarget = { type: null, id: null, name: null };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    noticeModal = new bootstrap.Modal(document.getElementById("noticeModal"));
+    deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+    inviteModal = new bootstrap.Modal(document.getElementById("inviteModal"));
+    rejectModal = new bootstrap.Modal(document.getElementById("rejectModal"));
+    detailModal = new bootstrap.Modal(document.getElementById("detailModal"));
+
+    // Notice form submission
+    document
+      .getElementById("noticeForm")
+      .addEventListener("submit", handleNoticeSubmit);
+
+    // Delete confirmation
+    document
+      .getElementById("confirm-delete-btn")
+      .addEventListener("click", confirmDelete);
+  });
+
+  async function loadNotices() {
+    const container = document.getElementById("tab-notices");
+    container.innerHTML = `<div class="loading-spinner"><div class="spinner"></div></div>`;
+
+    try {
+      const response = await axios.get(`${API_URL}/notices/`);
+      notices = response.data;
+
+      // Update sidebar badge
+      document.getElementById("notices-count").textContent = notices.filter(
+        (n) => n.status === "ACTIVE"
+      ).length;
+
+      container.innerHTML = `
+        <!-- Toolbar -->
+        <div class="tab-toolbar">
+          <div class="tab-toolbar-left">
+            <select class="filter-select" id="notices-status-filter" onchange="filterNoticesTable()">
+              <option value="">All Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+            <div class="search-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" class="search-input" id="notices-search" placeholder="Search notices..." oninput="filterNoticesTable()">
+            </div>
+          </div>
+          <div class="tab-toolbar-right">
+            <button class="btn btn-primary" onclick="openNoticeModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Create Notice
+            </button>
+          </div>
+        </div>
+
+        <!-- Notices Table -->
+        <div class="card">
+          <div class="card-body p-0">
+            ${
+              notices.length > 0
+                ? `
+              <div class="table-responsive">
+                <table class="table" id="notices-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Deadline</th>
+                      <th>Proposals</th>
+                      <th>Status</th>
+                      <th>Active</th>
+                      <th style="width: 120px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${renderNoticesTableRows(notices)}
+                  </tbody>
+                </table>
+              </div>
+            `
+                : `
+              <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <h5>No Notices Yet</h5>
+                <p>Create your first research notice to start accepting proposals.</p>
+                <button class="btn btn-primary mt-3" onclick="openNoticeModal()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Create Notice
+                </button>
+              </div>
+            `
+            }
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      console.error("Failed to load notices:", err);
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <h5>Failed to Load Notices</h5>
+          <p>Please check your connection and try again.</p>
+          <button class="btn btn-primary mt-3" onclick="loadNotices()">Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  function renderNoticesTableRows(noticesList) {
+    return noticesList
+      .map((n) => {
+        const isExpired = new Date(n.deadline) < new Date();
+        const proposalCount = n.proposal_count || 0;
+
+        return `
+        <tr data-id="${n.id}" data-status="${n.status}">
+          <td>
+            <strong>${escapeHtml(n.title)}</strong>
+            ${
+              n.description
+                ? `<br><small class="text-muted">${escapeHtml(
+                    n.description
+                  ).substring(0, 60)}${
+                    n.description.length > 60 ? "..." : ""
+                  }</small>`
+                : ""
+            }
+          </td>
+          <td>
+            ${formatDateTime(n.deadline)}
+            ${isExpired ? '<br><small class="text-danger">Expired</small>' : ""}
+          </td>
+          <td>
+            <span class="badge bg-light text-dark">${proposalCount} proposal${
+          proposalCount !== 1 ? "s" : ""
+        }</span>
+          </td>
+          <td>${getStatusBadge(n.status)}</td>
+          <td>
+            <label class="toggle-switch">
+              <input type="checkbox" ${
+                n.status === "ACTIVE" ? "checked" : ""
+              } onchange="toggleNoticeStatus(${n.id}, this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </td>
+          <td>
+            <div class="action-cell">
+              <button class="btn-action edit" onclick="openNoticeModal(${
+                n.id
+              })" title="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="btn-action delete" onclick="requestDelete('notice', ${
+                n.id
+              }, '${escapeHtml(n.title)}')" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+      })
+      .join("");
+  }
+
+  function filterNoticesTable() {
+    const statusFilter = document.getElementById("notices-status-filter").value;
+    const searchQuery = document
+      .getElementById("notices-search")
+      .value.toLowerCase();
+
+    const filtered = notices.filter((n) => {
+      const matchesStatus = !statusFilter || n.status === statusFilter;
+      const matchesSearch =
+        !searchQuery ||
+        n.title.toLowerCase().includes(searchQuery) ||
+        (n.description && n.description.toLowerCase().includes(searchQuery));
+      return matchesStatus && matchesSearch;
+    });
+
+    const tbody = document.querySelector("#notices-table tbody");
+    if (tbody) {
+      tbody.innerHTML = renderNoticesTableRows(filtered);
+    }
+  }
+
+  function openNoticeModal(noticeId = null) {
+    const form = document.getElementById("noticeForm");
+    form.reset();
+    document.getElementById("notice-id").value = "";
+
+    if (noticeId) {
+      // Edit mode
+      const notice = notices.find((n) => n.id === noticeId);
+      if (notice) {
+        document.getElementById("noticeModalLabel").textContent = "Edit Notice";
+        document.getElementById("notice-submit-text").textContent =
+          "Update Notice";
+        document.getElementById("notice-id").value = notice.id;
+        document.getElementById("notice-title").value = notice.title;
+        document.getElementById("notice-description").value =
+          notice.description || "";
+        document.getElementById("notice-eligibility").value =
+          notice.eligibility_criteria || "";
+        document.getElementById("notice-requirements").value =
+          notice.requirements || "";
+        document.getElementById("notice-status").value = notice.status;
+
+        // Format deadline for datetime-local input
+        const deadline = new Date(notice.deadline);
+        document.getElementById("notice-deadline").value = deadline
+          .toISOString()
+          .slice(0, 16);
+      }
+    } else {
+      // Create mode
+      document.getElementById("noticeModalLabel").textContent = "Create Notice";
+      document.getElementById("notice-submit-text").textContent =
+        "Create Notice";
+
+      // Set default deadline to 30 days from now
+      const defaultDeadline = new Date();
+      defaultDeadline.setDate(defaultDeadline.getDate() + 30);
+      document.getElementById("notice-deadline").value = defaultDeadline
+        .toISOString()
+        .slice(0, 16);
+    }
+
+    noticeModal.show();
+  }
+
+  async function handleNoticeSubmit(e) {
+    e.preventDefault();
+
+    const noticeId = document.getElementById("notice-id").value;
+    const data = {
+      title: document.getElementById("notice-title").value,
+      description: document.getElementById("notice-description").value,
+      deadline: document.getElementById("notice-deadline").value,
+      eligibility_criteria: document.getElementById("notice-eligibility").value,
+      requirements: document.getElementById("notice-requirements").value,
+      status: document.getElementById("notice-status").value,
+    };
+
+    try {
+      if (noticeId) {
+        // Update existing notice
+        await axios.put(`${API_URL}/notices/${noticeId}/`, data);
+        showToast("Notice updated successfully", "success");
+      } else {
+        // Create new notice
+        await axios.post(`${API_URL}/notices/`, data);
+        showToast("Notice created successfully", "success");
+      }
+
+      noticeModal.hide();
+      loadNotices();
+      loadDashboard(); // Refresh dashboard stats
+    } catch (err) {
+      console.error("Failed to save notice:", err);
+      const message =
+        err.response?.data?.detail ||
+        err.response?.data?.message ||
+        "Failed to save notice";
+      showToast(message, "error");
+    }
+  }
+
+  async function toggleNoticeStatus(noticeId, isActive) {
+    try {
+      await axios.patch(`${API_URL}/notices/${noticeId}/`, {
+        status: isActive ? "ACTIVE" : "CLOSED",
+      });
+      showToast(
+        `Notice ${isActive ? "activated" : "closed"} successfully`,
+        "success"
+      );
+
+      // Update local state
+      const notice = notices.find((n) => n.id === noticeId);
+      if (notice) {
+        notice.status = isActive ? "ACTIVE" : "CLOSED";
+      }
+
+      // Update sidebar badge
+      document.getElementById("notices-count").textContent = notices.filter(
+        (n) => n.status === "ACTIVE"
+      ).length;
+
+      // Update the status badge in the row
+      const row = document.querySelector(
+        `#notices-table tr[data-id="${noticeId}"]`
+      );
+      if (row) {
+        row.dataset.status = isActive ? "ACTIVE" : "CLOSED";
+        row.querySelector("td:nth-child(4)").innerHTML = getStatusBadge(
+          isActive ? "ACTIVE" : "CLOSED"
+        );
+      }
+    } catch (err) {
+      console.error("Failed to toggle notice status:", err);
+      showToast("Failed to update notice status", "error");
+      // Revert toggle
+      loadNotices();
+    }
+  }
+
+  function requestDelete(type, id, name) {
+    deleteTarget = { type, id, name };
+    document.getElementById("delete-item-name").textContent = name;
+    deleteModal.show();
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget.type || !deleteTarget.id) return;
+
+    try {
+      if (deleteTarget.type === "notice") {
+        await axios.delete(`${API_URL}/notices/${deleteTarget.id}/`);
+        showToast("Notice deleted successfully", "success");
+        loadNotices();
+        loadDashboard();
+      }
+      // Future: handle proposal deletion
+
+      deleteModal.hide();
+      deleteTarget = { type: null, id: null, name: null };
+    } catch (err) {
+      console.error("Failed to delete:", err);
+      const message = err.response?.data?.detail || "Failed to delete item";
+      showToast(message, "error");
+    }
+  }
+
+  // ===== Proposals State =====
+  let proposalStepFilter = "";
+  let proposalStatusFilter = "";
+  let proposalNoticeFilter = "";
+  let proposalSearchQuery = "";
+
+  async function loadProposals() {
+    const container = document.getElementById("tab-proposals");
+    container.innerHTML = `<div class="loading-spinner"><div class="spinner"></div></div>`;
+
+    try {
+      // Fetch proposals and notices for filter dropdown
+      const [proposalsRes, noticesRes] = await Promise.all([
+        axios.get(`${API_URL}/proposals/`),
+        axios.get(`${API_URL}/notices/`),
+      ]);
+
+      proposals = proposalsRes.data;
+      notices = noticesRes.data;
+
+      // Update sidebar badge
+      document.getElementById("proposals-count").textContent = proposals.filter(
+        (p) => p.status === "PENDING"
+      ).length;
+
+      // Build notice options
+      const noticeOptions = notices
+        .map((n) => `<option value="${n.id}">${escapeHtml(n.title)}</option>`)
+        .join("");
+
+      container.innerHTML = `
+        <!-- Toolbar -->
+        <div class="tab-toolbar">
+          <div class="tab-toolbar-left">
+            <select class="filter-select" id="filter-step" onchange="filterProposalsTable()">
+              <option value="">All Steps</option>
+              <option value="1">Step 1: Format Check</option>
+              <option value="2">Step 2: Plagiarism</option>
+              <option value="3">Step 3: Evaluation</option>
+              <option value="4">Step 4: Seminar</option>
+              <option value="5">Step 5: Committee</option>
+              <option value="6">Step 6: Rector</option>
+            </select>
+            <select class="filter-select" id="filter-status" onchange="filterProposalsTable()">
+              <option value="">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="ACCEPTED">Accepted</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+            <select class="filter-select" id="filter-notice" onchange="filterProposalsTable()">
+              <option value="">All Notices</option>
+              ${noticeOptions}
+            </select>
+            <div class="search-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" class="search-input" id="proposals-search" placeholder="Search proposals..." oninput="filterProposalsTable()">
+            </div>
+          </div>
+          <div class="tab-toolbar-right">
+            <span class="text-muted" id="proposals-count-label">${
+              proposals.length
+            } proposals</span>
+          </div>
+        </div>
+
+        <!-- Proposals Table -->
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table" id="proposals-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px;"></th>
+                    <th>Title</th>
+                    <th>Participant</th>
+                    <th>Notice</th>
+                    <th>Step</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                  </tr>
+                </thead>
+                <tbody id="proposals-tbody">
+                  ${renderProposalsTableRows(proposals)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Apply any pre-set filters (e.g., from dashboard click)
+      if (proposalStepFilter) {
+        document.getElementById("filter-step").value = proposalStepFilter;
+        filterProposalsTable();
+      }
+    } catch (err) {
+      console.error("Failed to load proposals:", err);
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <h5>Failed to Load Proposals</h5>
+          <p>Please check your connection and try again.</p>
+          <button class="btn btn-primary mt-3" onclick="loadProposals()">Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  function renderProposalsTableRows(proposalsList) {
+    if (proposalsList.length === 0) {
+      return `<tr><td colspan="7" class="text-center py-5 text-muted">No proposals found</td></tr>`;
+    }
+
+    return proposalsList
+      .map(
+        (p) => `
+      <tr class="proposal-row" data-id="${p.id}" data-step="${
+          p.current_step
+        }" data-status="${p.status}" data-notice="${p.notice || ""}">
+        <td class="expand-cell">
+          <button class="btn-expand" onclick="toggleProposalPanel(${
+            p.id
+          })" title="Expand">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        </td>
+        <td>
+          <strong>${escapeHtml(p.title)}</strong>
+          ${
+            p.plagiarism_percentage
+              ? `<br><small class="text-muted">Plagiarism: ${p.plagiarism_percentage}%</small>`
+              : ""
+          }
+        </td>
+        <td>${escapeHtml(p.participant_name || "N/A")}</td>
+        <td>${escapeHtml(p.notice_title || "None")}</td>
+        <td>${getStepBadge(p.current_step, p.status === "PENDING")}</td>
+        <td>${getStatusBadge(p.status)}</td>
+        <td>${formatDate(p.created_at)}</td>
+      </tr>
+      <tr class="proposal-action-panel" id="panel-${
+        p.id
+      }" style="display: none;">
+        <td colspan="7">
+          <div class="action-panel-content">
+            ${getActionPanelContent(p)}
+          </div>
+        </td>
+      </tr>
+    `
+      )
+      .join("");
+  }
+
+  function getActionPanelContent(proposal) {
+    const p = proposal;
+
+    // If not pending, show read-only info
+    if (p.status !== "PENDING") {
+      return `
+        <div class="panel-section">
+          <div class="panel-info">
+            <strong>Status:</strong> ${p.status}
+            ${
+              p.rejection_reason
+                ? `<br><strong>Reason:</strong> ${escapeHtml(
+                    p.rejection_reason
+                  )}`
+                : ""
+            }
+          </div>
+          <div class="panel-actions">
+            <button class="btn btn-sm btn-outline-primary" onclick="viewProposalDetails(${
+              p.id
+            })">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              View Details
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Step-specific actions
+    switch (p.current_step) {
+      case 1: // Format Check
+        return `
+          <div class="panel-section">
+            <div class="panel-info">
+              <h6>Step 1: Format Check</h6>
+              <p class="text-muted mb-2">Review the proposal format and documents.</p>
+              ${
+                p.proposal_file
+                  ? `<a href="${p.proposal_file}" target="_blank" class="btn btn-sm btn-outline-secondary me-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Proposal
+              </a>`
+                  : ""
+              }
+            </div>
+            <div class="panel-actions">
+              <button class="btn btn-success btn-sm" onclick="submitFormatCheck(${
+                p.id
+              }, true)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Accept
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="showRejectModal(${
+                p.id
+              }, 'format')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Reject
+              </button>
+            </div>
+          </div>
+        `;
+
+      case 2: // Plagiarism Check
+        return `
+          <div class="panel-section">
+            <div class="panel-info">
+              <h6>Step 2: Plagiarism Check</h6>
+              <p class="text-muted mb-2">Enter the plagiarism percentage (max 20% allowed).</p>
+            </div>
+            <div class="panel-actions">
+              <div class="input-group" style="max-width: 200px;">
+                <input type="number" class="form-control form-control-sm" id="plagiarism-${
+                  p.id
+                }" min="0" max="100" step="0.1" placeholder="%" value="${
+          p.plagiarism_percentage || ""
+        }">
+                <span class="input-group-text">%</span>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="submitPlagiarismCheck(${
+                p.id
+              })">
+                Submit Result
+              </button>
+            </div>
+          </div>
+        `;
+
+      case 3: // Evaluation
+        const evaluators = p.evaluations || [];
+        const completedEvals = evaluators.filter(
+          (e) => e.status === "COMPLETED"
+        ).length;
+        const avgMarks =
+          evaluators.length > 0
+            ? (
+                evaluators
+                  .filter((e) => e.status === "COMPLETED")
+                  .reduce((sum, e) => sum + (e.marks || 0), 0) /
+                (completedEvals || 1)
+              ).toFixed(1)
+            : "N/A";
+
+        return `
+          <div class="panel-section">
+            <div class="panel-info">
+              <h6>Step 3: External Evaluation</h6>
+              <p class="text-muted mb-2">Invite at least 2 external evaluators. Minimum average: 65 marks.</p>
+              <div class="evaluator-summary mb-2">
+                <span class="badge bg-light text-dark me-2">${
+                  evaluators.length
+                } invited</span>
+                <span class="badge bg-success me-2">${completedEvals} completed</span>
+                <span class="badge bg-primary">Avg: ${avgMarks}</span>
+              </div>
+              ${
+                evaluators.length > 0
+                  ? `
+                <div class="evaluator-list mb-2">
+                  ${evaluators
+                    .map(
+                      (e) => `
+                    <div class="evaluator-item">
+                      <span>${escapeHtml(e.name)}</span>
+                      <span class="badge ${
+                        e.status === "COMPLETED"
+                          ? "bg-success"
+                          : e.status === "PENDING"
+                          ? "bg-warning"
+                          : "bg-secondary"
+                      }">${e.status}</span>
+                      ${
+                        e.marks
+                          ? `<span class="badge bg-info">${e.marks} marks</span>`
+                          : ""
+                      }
+                    </div>
+                  `
+                    )
+                    .join("")}
+                </div>
+              `
+                  : ""
+              }
+            </div>
+            <div class="panel-actions">
+              <button class="btn btn-outline-primary btn-sm" onclick="showInviteModal(${
+                p.id
+              }, 'evaluator')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                Invite Evaluator
+              </button>
+              ${
+                completedEvals >= 2
+                  ? `
+                <button class="btn btn-success btn-sm" onclick="completeEvaluation(${p.id})">
+                  Complete Evaluation
+                </button>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+        `;
+
+      case 4: // Seminar
+        return `
+          <div class="panel-section">
+            <div class="panel-info">
+              <h6>Step 4: Seminar Presentation</h6>
+              <p class="text-muted mb-2">Record the seminar attendance and faculty decision.</p>
+            </div>
+            <div class="panel-actions">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="attended-${p.id}" checked>
+                <label class="form-check-label" for="attended-${p.id}">Attended</label>
+              </div>
+              <button class="btn btn-success btn-sm" onclick="submitSeminarDecision(${p.id}, true)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Faculty Approved
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="showRejectModal(${p.id}, 'seminar')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Reject
+              </button>
+            </div>
+          </div>
+        `;
+
+      case 5: // Committee
+        const reviews = p.committee_reviews || [];
+        const completedReviews = reviews.filter(
+          (r) => r.status === "COMPLETED"
+        ).length;
+
+        return `
+          <div class="panel-section">
+            <div class="panel-info">
+              <h6>Step 5: Research Committee</h6>
+              <p class="text-muted mb-2">Invite committee members to review the proposal and budget.</p>
+              <div class="evaluator-summary mb-2">
+                <span class="badge bg-light text-dark me-2">${
+                  reviews.length
+                } invited</span>
+                <span class="badge bg-success">${completedReviews} completed</span>
+              </div>
+              ${
+                p.budget_file
+                  ? `<a href="${p.budget_file}" target="_blank" class="btn btn-sm btn-outline-secondary me-2">Download Budget</a>`
+                  : '<span class="text-warning">Budget not uploaded</span>'
+              }
+              ${
+                p.revised_file
+                  ? `<a href="${p.revised_file}" target="_blank" class="btn btn-sm btn-outline-secondary">Download Revised Proposal</a>`
+                  : ""
+              }
+              ${
+                reviews.length > 0
+                  ? `
+                <div class="evaluator-list mt-2">
+                  ${reviews
+                    .map(
+                      (r) => `
+                    <div class="evaluator-item">
+                      <span>${escapeHtml(r.name)}</span>
+                      <span class="badge ${
+                        r.status === "COMPLETED"
+                          ? r.decision === "APPROVED"
+                            ? "bg-success"
+                            : "bg-danger"
+                          : "bg-warning"
+                      }">${
+                        r.status === "COMPLETED" ? r.decision : r.status
+                      }</span>
+                    </div>
+                  `
+                    )
+                    .join("")}
+                </div>
+              `
+                  : ""
+              }
+            </div>
+            <div class="panel-actions">
+              <button class="btn btn-outline-primary btn-sm" onclick="showInviteModal(${
+                p.id
+              }, 'committee')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                Invite Member
+              </button>
+              ${
+                completedReviews >= 1
+                  ? `
+                <button class="btn btn-success btn-sm" onclick="completeCommitteeReview(${p.id})">
+                  Complete Review
+                </button>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+        `;
+
+      case 6: // Rector
+        const rectorReview = p.rector_review;
+
+        return `
+          <div class="panel-section">
+            <div class="panel-info">
+              <h6>Step 6: Rector Approval</h6>
+              <p class="text-muted mb-2">Send proposal to rector for final approval.</p>
+              ${
+                rectorReview
+                  ? `
+                <div class="evaluator-summary mb-2">
+                  <span class="badge ${
+                    rectorReview.status === "COMPLETED"
+                      ? rectorReview.decision === "APPROVED"
+                        ? "bg-success"
+                        : "bg-danger"
+                      : "bg-warning"
+                  }">
+                    ${
+                      rectorReview.status === "COMPLETED"
+                        ? rectorReview.decision
+                        : rectorReview.status
+                    }
+                  </span>
+                  <span class="text-muted ms-2">${escapeHtml(
+                    rectorReview.email
+                  )}</span>
+                </div>
+              `
+                  : ""
+              }
+            </div>
+            <div class="panel-actions">
+              ${
+                !rectorReview
+                  ? `
+                <button class="btn btn-outline-primary btn-sm" onclick="showInviteModal(${p.id}, 'rector')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                  Send to Rector
+                </button>
+              `
+                  : rectorReview.status === "COMPLETED"
+                  ? `
+                <button class="btn btn-success btn-sm" onclick="completeRectorReview(${p.id})">
+                  Finalize Approval
+                </button>
+              `
+                  : `
+                <span class="text-muted">Awaiting rector response...</span>
+              `
+              }
+            </div>
+          </div>
+        `;
+
+      default:
+        return `<div class="text-muted">Unknown step</div>`;
+    }
+  }
+
+  function toggleProposalPanel(proposalId) {
+    const panel = document.getElementById(`panel-${proposalId}`);
+    const row = document.querySelector(
+      `.proposal-row[data-id="${proposalId}"]`
+    );
+    const btn = row.querySelector(".btn-expand");
+
+    if (panel.style.display === "none") {
+      // Close all other panels
+      document
+        .querySelectorAll(".proposal-action-panel")
+        .forEach((p) => (p.style.display = "none"));
+      document
+        .querySelectorAll(".btn-expand")
+        .forEach((b) => b.classList.remove("expanded"));
+
+      panel.style.display = "table-row";
+      btn.classList.add("expanded");
+    } else {
+      panel.style.display = "none";
+      btn.classList.remove("expanded");
+    }
+  }
+
+  function filterProposalsTable() {
+    const stepFilter = document.getElementById("filter-step").value;
+    const statusFilter = document.getElementById("filter-status").value;
+    const noticeFilter = document.getElementById("filter-notice").value;
+    const searchQuery = document
+      .getElementById("proposals-search")
+      .value.toLowerCase();
+
+    // Store for persistence
+    proposalStepFilter = stepFilter;
+    proposalStatusFilter = statusFilter;
+    proposalNoticeFilter = noticeFilter;
+    proposalSearchQuery = searchQuery;
+
+    const filtered = proposals.filter((p) => {
+      const matchesStep = !stepFilter || p.current_step == stepFilter;
+      const matchesStatus = !statusFilter || p.status === statusFilter;
+      const matchesNotice = !noticeFilter || p.notice == noticeFilter;
+      const matchesSearch =
+        !searchQuery ||
+        p.title.toLowerCase().includes(searchQuery) ||
+        (p.participant_name &&
+          p.participant_name.toLowerCase().includes(searchQuery));
+      return matchesStep && matchesStatus && matchesNotice && matchesSearch;
+    });
+
+    document.getElementById("proposals-tbody").innerHTML =
+      renderProposalsTableRows(filtered);
+    document.getElementById(
+      "proposals-count-label"
+    ).textContent = `${filtered.length} of ${proposals.length} proposals`;
+  }
+
+  // ===== Step Action Functions =====
+  async function submitFormatCheck(proposalId, accepted) {
+    try {
+      await axios.post(`${API_URL}/proposals/${proposalId}/format_check/`, {
+        accepted,
+      });
+      showToast("Format check completed", "success");
+      loadProposals();
+      loadDashboard();
+    } catch (err) {
+      console.error("Format check failed:", err);
+      showToast(
+        err.response?.data?.error || "Failed to submit format check",
+        "error"
+      );
+    }
+  }
+
+  async function submitPlagiarismCheck(proposalId) {
+    const percentage = parseFloat(
+      document.getElementById(`plagiarism-${proposalId}`).value
+    );
+    if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+      showToast("Please enter a valid percentage (0-100)", "error");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${API_URL}/proposals/${proposalId}/plagiarism_check/`,
+        { percentage }
+      );
+      showToast(
+        `Plagiarism check completed: ${res.data.status}`,
+        res.data.status === "rejected" ? "error" : "success"
+      );
+      loadProposals();
+      loadDashboard();
+    } catch (err) {
+      console.error("Plagiarism check failed:", err);
+      showToast(
+        err.response?.data?.error || "Failed to submit plagiarism check",
+        "error"
+      );
+    }
+  }
+
+  async function completeEvaluation(proposalId) {
+    try {
+      const res = await axios.post(
+        `${API_URL}/proposals/${proposalId}/complete_evaluation/`
+      );
+      showToast(
+        `Evaluation ${res.data.status}`,
+        res.data.status === "rejected" ? "error" : "success"
+      );
+      loadProposals();
+      loadDashboard();
+    } catch (err) {
+      console.error("Complete evaluation failed:", err);
+      showToast(
+        err.response?.data?.error || "Failed to complete evaluation",
+        "error"
+      );
+    }
+  }
+
+  async function submitSeminarDecision(proposalId, accepted) {
+    const attended = document.getElementById(`attended-${proposalId}`).checked;
+    try {
+      await axios.post(`${API_URL}/proposals/${proposalId}/seminar_decision/`, {
+        attended,
+        accepted,
+      });
+      showToast("Seminar decision recorded", "success");
+      loadProposals();
+      loadDashboard();
+    } catch (err) {
+      console.error("Seminar decision failed:", err);
+      showToast(
+        err.response?.data?.error || "Failed to record seminar decision",
+        "error"
+      );
+    }
+  }
+
+  async function completeCommitteeReview(proposalId) {
+    try {
+      const res = await axios.post(
+        `${API_URL}/proposals/${proposalId}/complete_committee_review/`
+      );
+      showToast(
+        `Committee review ${res.data.status}`,
+        res.data.status === "rejected" ? "error" : "success"
+      );
+      loadProposals();
+      loadDashboard();
+    } catch (err) {
+      console.error("Complete committee review failed:", err);
+      showToast(
+        err.response?.data?.error || "Failed to complete committee review",
+        "error"
+      );
+    }
+  }
+
+  async function completeRectorReview(proposalId) {
+    try {
+      const res = await axios.post(
+        `${API_URL}/proposals/${proposalId}/complete_rector_review/`
+      );
+      showToast(
+        `Rector review completed: ${res.data.status}`,
+        res.data.status === "rejected" ? "error" : "success"
+      );
+      loadProposals();
+      loadDashboard();
+    } catch (err) {
+      console.error("Complete rector review failed:", err);
+      showToast(
+        err.response?.data?.error || "Failed to complete rector review",
+        "error"
+      );
+    }
+  }
+
+  // Rejection modal handler
+  let rejectTarget = { id: null, type: null };
+
+  function showRejectModal(proposalId, type) {
+    rejectTarget = { id: proposalId, type };
+    document.getElementById("reject-reason").value = "";
+    rejectModal.show();
+  }
+
+  async function submitRejection() {
+    if (!rejectTarget.id) return;
+
+    const reason = document.getElementById("reject-reason").value;
+
+    try {
+      if (rejectTarget.type === "format") {
+        await axios.post(
+          `${API_URL}/proposals/${rejectTarget.id}/format_check/`,
+          { accepted: false, reason }
+        );
+      } else if (rejectTarget.type === "seminar") {
+        const attended =
+          document.getElementById(`attended-${rejectTarget.id}`)?.checked ||
+          false;
+        await axios.post(
+          `${API_URL}/proposals/${rejectTarget.id}/seminar_decision/`,
+          { attended, accepted: false, reason }
+        );
+      }
+
+      showToast("Proposal rejected", "success");
+      rejectModal.hide();
+      loadProposals();
+      loadDashboard();
+    } catch (err) {
+      console.error("Rejection failed:", err);
+      showToast(
+        err.response?.data?.error || "Failed to reject proposal",
+        "error"
+      );
+    }
+  }
+
+  // Invite modal handler
+  let inviteTarget = { id: null, type: null };
+
+  function showInviteModal(proposalId, type) {
+    inviteTarget = { id: proposalId, type };
+    document.getElementById("invite-name").value = "";
+    document.getElementById("invite-email").value = "";
+
+    const titles = {
+      evaluator: "Invite External Evaluator",
+      committee: "Invite Committee Member",
+      rector: "Send to Rector",
+    };
+    document.getElementById("inviteModalLabel").textContent =
+      titles[type] || "Invite";
+
+    inviteModal.show();
+  }
+
+  async function submitInvite() {
+    if (!inviteTarget.id) return;
+
+    const name = document.getElementById("invite-name").value.trim();
+    const email = document.getElementById("invite-email").value.trim();
+
+    if (!name || !email) {
+      showToast("Please enter name and email", "error");
+      return;
+    }
+
+    try {
+      let endpoint = "";
+      if (inviteTarget.type === "evaluator") {
+        endpoint = `${API_URL}/proposals/${inviteTarget.id}/invite_evaluator/`;
+      } else if (inviteTarget.type === "committee") {
+        endpoint = `${API_URL}/proposals/${inviteTarget.id}/invite_committee/`;
+      } else if (inviteTarget.type === "rector") {
+        endpoint = `${API_URL}/proposals/${inviteTarget.id}/invite_rector/`;
+      }
+
+      await axios.post(endpoint, { name, email });
+      showToast(
+        `${
+          inviteTarget.type === "rector" ? "Sent to" : "Invitation sent to"
+        } ${name}`,
+        "success"
+      );
+      inviteModal.hide();
       loadProposals();
     } catch (err) {
-      alert("Action failed");
+      console.error("Invite failed:", err);
+      showToast(
+        err.response?.data?.error || "Failed to send invitation",
+        "error"
+      );
     }
   }
 
-  function submitPlagiarism(id) {
-    const val = document.getElementById(`plag-${id}`).value;
-    action(id, "plagiarism_check", { percentage: val });
+  function viewProposalDetails(proposalId) {
+    const p = proposals.find((prop) => prop.id === proposalId);
+    if (!p) return;
+
+    // Build timeline info
+    const timeline = p.timeline || [];
+    const timelineHtml =
+      timeline.length > 0
+        ? timeline
+            .map(
+              (t) => `
+        <div class="timeline-item">
+          <div class="timeline-dot ${
+            t.action.includes("Rejected")
+              ? "rejected"
+              : t.action.includes("Accepted") || t.action.includes("Approved")
+              ? "accepted"
+              : ""
+          }"></div>
+          <div class="timeline-content">
+            <strong>${escapeHtml(t.step_name)}</strong>: ${escapeHtml(t.action)}
+            <br><small class="text-muted">${formatDateTime(t.created_at)}${
+                t.actor_name ? " by " + escapeHtml(t.actor_name) : ""
+              }</small>
+            ${t.details ? `<br><small>${escapeHtml(t.details)}</small>` : ""}
+          </div>
+        </div>
+      `
+            )
+            .join("")
+        : '<p class="text-muted">No timeline available yet</p>';
+
+    // Build evaluators info
+    const evaluators = p.evaluations || [];
+    const evaluatorsHtml =
+      evaluators.length > 0
+        ? evaluators
+            .map(
+              (e) => `
+        <div class="evaluator-item">
+          <span>${escapeHtml(e.name)}</span>
+          <span class="badge ${
+            e.status === "COMPLETED"
+              ? "bg-success"
+              : e.status === "EXPIRED"
+              ? "bg-secondary"
+              : "bg-warning"
+          }"><small>${e.status}</small></span>
+          ${
+            e.marks ? `<span class="badge bg-info">${e.marks} marks</span>` : ""
+          }
+        </div>
+      `
+            )
+            .join("")
+        : '<p class="text-muted">No evaluators assigned yet</p>';
+
+    // Build committee reviews info
+    const committeeReviews = p.committee_reviews || [];
+    const committeeHtml =
+      committeeReviews.length > 0
+        ? committeeReviews
+            .map(
+              (r) => `
+        <div class="evaluator-item">
+          <span>${escapeHtml(r.name)}</span>
+          <span class="badge ${
+            r.status === "COMPLETED"
+              ? r.decision === "APPROVED"
+                ? "bg-success"
+                : "bg-danger"
+              : "bg-warning"
+          }"><small>${
+                r.status === "COMPLETED" ? r.decision : r.status
+              }</small></span>
+        </div>
+      `
+            )
+            .join("")
+        : '<p class="text-muted">No committee members assigned yet</p>';
+
+    // Rector review
+    const rector = p.rector_review;
+    const rectorHtml = rector
+      ? `
+      <div class="evaluator-item">
+        <span>${escapeHtml(rector.name || rector.email)}</span>
+        <span class="badge ${
+          rector.status === "COMPLETED"
+            ? rector.decision === "APPROVED"
+              ? "bg-success"
+              : "bg-danger"
+            : "bg-warning"
+        }"><small>${
+          rector.status === "COMPLETED" ? rector.decision : rector.status
+        }</small></span>
+      </div>
+    `
+      : '<p class="text-muted">Not sent to rector yet</p>';
+
+    const stepNames = {
+      1: "Format Check",
+      2: "Plagiarism Check",
+      3: "Evaluation",
+      4: "Seminar",
+      5: "Research Committee",
+      6: "Rector Approval",
+    };
+
+    // Show in detail modal
+    document.getElementById("detailModalLabel").textContent = p.title;
+    document.getElementById("detailModalBody").innerHTML = `
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="detail-section">
+            <h6 class="detail-section-title">Basic Information</h6>
+            <div class="detail-item"><span class="detail-label">Participant:</span> ${escapeHtml(
+              p.participant_name || "N/A"
+            )}</div>
+            <div class="detail-item"><span class="detail-label">Notice:</span> ${escapeHtml(
+              p.notice_title || "None"
+            )}</div>
+            <div class="detail-item"><span class="detail-label">Status:</span> ${getStatusBadge(
+              p.status
+            )}</div>
+            <div class="detail-item"><span class="detail-label">Current Step:</span> ${getStepBadge(
+              p.current_step,
+              p.status === "PENDING"
+            )} ${stepNames[p.current_step] || ""}</div>
+            ${
+              p.plagiarism_percentage !== null &&
+              p.plagiarism_percentage !== undefined
+                ? `<div class="detail-item"><span class="detail-label">Plagiarism:</span> <span class="${
+                    p.plagiarism_percentage > 20
+                      ? "text-danger"
+                      : "text-success"
+                  }">${p.plagiarism_percentage}%</span></div>`
+                : ""
+            }
+            ${
+              p.rejection_reason
+                ? `<div class="detail-item"><span class="detail-label">Rejection Reason:</span> <span class="text-danger">${escapeHtml(
+                    p.rejection_reason
+                  )}</span></div>`
+                : ""
+            }
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-section">
+            <h6 class="detail-section-title">Dates & Files</h6>
+            <div class="detail-item"><span class="detail-label">Submitted:</span> ${formatDateTime(
+              p.created_at
+            )}</div>
+            <div class="detail-item"><span class="detail-label">Last Updated:</span> ${formatDateTime(
+              p.updated_at
+            )}</div>
+            <div class="detail-files mt-3">
+              ${
+                p.proposal_file
+                  ? `<a href="${p.proposal_file}" target="_blank" class="btn btn-sm btn-outline-primary me-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Proposal
+              </a>`
+                  : ""
+              }
+              ${
+                p.budget_file
+                  ? `<a href="${p.budget_file}" target="_blank" class="btn btn-sm btn-outline-secondary me-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Budget
+              </a>`
+                  : ""
+              }
+              ${
+                p.revised_file
+                  ? `<a href="${p.revised_file}" target="_blank" class="btn btn-sm btn-outline-secondary mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Revised
+              </a>`
+                  : ""
+              }
+              ${
+                !p.proposal_file && !p.budget_file && !p.revised_file
+                  ? '<p class="text-muted mb-0">No files uploaded</p>'
+                  : ""
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="detail-section">
+            <h6 class="detail-section-title">External Evaluators</h6>
+            <div class="evaluator-list">
+              ${evaluatorsHtml}
+            </div>
+          </div>
+          
+          <div class="detail-section mt-3">
+            <h6 class="detail-section-title">Committee Reviews</h6>
+            <div class="evaluator-list">
+              ${committeeHtml}
+            </div>
+          </div>
+          
+          <div class="detail-section mt-3">
+            <h6 class="detail-section-title">Rector Review</h6>
+            <div class="evaluator-list">
+              ${rectorHtml}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-section">
+            <h6 class="detail-section-title">Activity Timeline</h6>
+            <div class="timeline-list">
+              ${timelineHtml}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    detailModal.show();
   }
 
-  function submitMarks(id) {
-    const m1 = document.getElementById(`m1-${id}`).value;
-    const m2 = document.getElementById(`m2-${id}`).value;
-    action(id, "evaluate", { mark1: m1, mark2: m2 });
+  // ===== Library State =====
+  let libraryStatusFilter = "";
+  let libraryNoticeFilter = "";
+  let librarySearchQuery = "";
+
+  async function loadLibrary() {
+    const container = document.getElementById("tab-library");
+    container.innerHTML = `<div class="loading-spinner"><div class="spinner"></div></div>`;
+
+    try {
+      // Fetch library proposals (accepted/rejected) and notices for filter
+      const [libraryRes, noticesRes] = await Promise.all([
+        axios.get(`${API_URL}/proposals/library/`),
+        axios.get(`${API_URL}/notices/`),
+      ]);
+
+      libraryProposals = libraryRes.data;
+      notices = noticesRes.data;
+
+      // Count stats
+      const acceptedCount = libraryProposals.filter(
+        (p) => p.status === "ACCEPTED"
+      ).length;
+      const rejectedCount = libraryProposals.filter(
+        (p) => p.status === "REJECTED"
+      ).length;
+
+      // Build notice options
+      const noticeOptions = notices
+        .map((n) => `<option value="${n.id}">${escapeHtml(n.title)}</option>`)
+        .join("");
+
+      container.innerHTML = `
+        <!-- Library Stats -->
+        <div class="library-stats mb-4">
+          <div class="library-stat-card accepted">
+            <div class="library-stat-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="library-stat-content">
+              <div class="library-stat-value">${acceptedCount}</div>
+              <div class="library-stat-label">Accepted</div>
+            </div>
+          </div>
+          <div class="library-stat-card rejected">
+            <div class="library-stat-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <div class="library-stat-content">
+              <div class="library-stat-value">${rejectedCount}</div>
+              <div class="library-stat-label">Rejected</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="tab-toolbar">
+          <div class="tab-toolbar-left">
+            <select class="filter-select" id="library-status-filter" onchange="filterLibraryTable()">
+              <option value="">All Status</option>
+              <option value="ACCEPTED">Accepted</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+            <select class="filter-select" id="library-notice-filter" onchange="filterLibraryTable()">
+              <option value="">All Notices</option>
+              ${noticeOptions}
+            </select>
+            <div class="search-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" class="search-input" id="library-search" placeholder="Search archive..." oninput="filterLibraryTable()">
+            </div>
+          </div>
+          <div class="tab-toolbar-right">
+            <span class="text-muted" id="library-count-label">${
+              libraryProposals.length
+            } archived</span>
+          </div>
+        </div>
+
+        <!-- Library Table -->
+        <div class="card">
+          <div class="card-body p-0">
+            ${
+              libraryProposals.length > 0
+                ? `
+              <div class="table-responsive">
+                <table class="table" id="library-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Participant</th>
+                      <th>Notice</th>
+                      <th>Final Step</th>
+                      <th>Status</th>
+                      <th>Completed</th>
+                      <th style="width: 100px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="library-tbody">
+                    ${renderLibraryTableRows(libraryProposals)}
+                  </tbody>
+                </table>
+              </div>
+            `
+                : `
+              <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <h5>No Archived Proposals</h5>
+                <p>Accepted and rejected proposals will appear here.</p>
+              </div>
+            `
+            }
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      console.error("Failed to load library:", err);
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <h5>Failed to Load Library</h5>
+          <p>Please check your connection and try again.</p>
+          <button class="btn btn-primary mt-3" onclick="loadLibrary()">Retry</button>
+        </div>
+      `;
+    }
   }
 
-  loadProposals();
+  function renderLibraryTableRows(list) {
+    if (list.length === 0) {
+      return `<tr><td colspan="7" class="text-center py-5 text-muted">No proposals found</td></tr>`;
+    }
+
+    return list
+      .map((p) => {
+        const stepNames = {
+          1: "Format Check",
+          2: "Plagiarism",
+          3: "Evaluation",
+          4: "Seminar",
+          5: "Committee",
+          6: "Rector",
+        };
+
+        return `
+        <tr data-id="${p.id}" data-status="${p.status}" data-notice="${
+          p.notice || ""
+        }">
+          <td>
+            <strong>${escapeHtml(p.title)}</strong>
+            ${
+              p.rejection_reason
+                ? `<br><small class="text-danger">${escapeHtml(
+                    p.rejection_reason
+                  ).substring(0, 50)}${
+                    p.rejection_reason.length > 50 ? "..." : ""
+                  }</small>`
+                : ""
+            }
+          </td>
+          <td>${escapeHtml(p.participant_name || "N/A")}</td>
+          <td>${escapeHtml(p.notice_title || "None")}</td>
+          <td><span class="step-badge">${
+            stepNames[p.current_step] || "Step " + p.current_step
+          }</span></td>
+          <td>${getStatusBadge(p.status)}</td>
+          <td>${formatDate(p.updated_at)}</td>
+          <td>
+            <div class="action-cell">
+              <button class="btn-action view" onclick="viewLibraryDetail(${
+                p.id
+              })" title="View Details">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+              ${
+                p.proposal_file
+                  ? `
+                <a href="${p.proposal_file}" target="_blank" class="btn-action edit" title="Download">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </a>
+              `
+                  : ""
+              }
+            </div>
+          </td>
+        </tr>
+      `;
+      })
+      .join("");
+  }
+
+  function filterLibraryTable() {
+    const statusFilter = document.getElementById("library-status-filter").value;
+    const noticeFilter = document.getElementById("library-notice-filter").value;
+    const searchQuery = document
+      .getElementById("library-search")
+      .value.toLowerCase();
+
+    // Store for persistence
+    libraryStatusFilter = statusFilter;
+    libraryNoticeFilter = noticeFilter;
+    librarySearchQuery = searchQuery;
+
+    const filtered = libraryProposals.filter((p) => {
+      const matchesStatus = !statusFilter || p.status === statusFilter;
+      const matchesNotice = !noticeFilter || p.notice == noticeFilter;
+      const matchesSearch =
+        !searchQuery ||
+        p.title.toLowerCase().includes(searchQuery) ||
+        (p.participant_name &&
+          p.participant_name.toLowerCase().includes(searchQuery));
+      return matchesStatus && matchesNotice && matchesSearch;
+    });
+
+    document.getElementById("library-tbody").innerHTML =
+      renderLibraryTableRows(filtered);
+    document.getElementById(
+      "library-count-label"
+    ).textContent = `${filtered.length} of ${libraryProposals.length} archived`;
+  }
+
+  function viewLibraryDetail(proposalId) {
+    const p = libraryProposals.find((prop) => prop.id === proposalId);
+    if (!p) return;
+
+    // Build timeline info
+    const timeline = p.timeline || [];
+    const timelineHtml =
+      timeline.length > 0
+        ? timeline
+            .map(
+              (t) => `
+        <div class="timeline-item">
+          <div class="timeline-dot ${
+            t.action.includes("Rejected")
+              ? "rejected"
+              : t.action.includes("Accepted") || t.action.includes("Approved")
+              ? "accepted"
+              : ""
+          }"></div>
+          <div class="timeline-content">
+            <strong>${escapeHtml(t.step_name)}</strong>: ${escapeHtml(t.action)}
+            <br><small class="text-muted">${formatDateTime(t.created_at)}${
+                t.actor_name ? " by " + escapeHtml(t.actor_name) : ""
+              }</small>
+            ${t.details ? `<br><small>${escapeHtml(t.details)}</small>` : ""}
+          </div>
+        </div>
+      `
+            )
+            .join("")
+        : '<p class="text-muted">No timeline available</p>';
+
+    // Build evaluators info
+    const evaluators = p.evaluations || [];
+    const evaluatorsHtml =
+      evaluators.length > 0
+        ? evaluators
+            .map(
+              (e) => `
+        <div class="evaluator-item">
+          <span>${escapeHtml(e.name)}</span>
+          <span class="badge ${
+            e.status === "COMPLETED" ? "bg-success" : "bg-warning"
+          }">${e.status}</span>
+          ${
+            e.marks ? `<span class="badge bg-info">${e.marks} marks</span>` : ""
+          }
+        </div>
+      `
+            )
+            .join("")
+        : '<p class="text-muted">No evaluators</p>';
+
+    // Show in detail modal
+    document.getElementById("detailModalLabel").textContent = p.title;
+    document.getElementById("detailModalBody").innerHTML = `
+      <div class="row">
+        <div class="col-md-6">
+          <p><strong>Participant:</strong> ${escapeHtml(
+            p.participant_name || "N/A"
+          )}</p>
+          <p><strong>Notice:</strong> ${escapeHtml(
+            p.notice_title || "None"
+          )}</p>
+          <p><strong>Status:</strong> ${getStatusBadge(p.status)}</p>
+          <p><strong>Final Step:</strong> Step ${p.current_step}</p>
+          ${
+            p.plagiarism_percentage
+              ? `<p><strong>Plagiarism:</strong> ${p.plagiarism_percentage}%</p>`
+              : ""
+          }
+          ${
+            p.rejection_reason
+              ? `<p><strong>Rejection Reason:</strong> <span class="text-danger">${escapeHtml(
+                  p.rejection_reason
+                )}</span></p>`
+              : ""
+          }
+        </div>
+        <div class="col-md-6">
+          <p><strong>Submitted:</strong> ${formatDateTime(p.created_at)}</p>
+          <p><strong>Last Updated:</strong> ${formatDateTime(p.updated_at)}</p>
+          ${
+            p.proposal_file
+              ? `<p><a href="${p.proposal_file}" target="_blank" class="btn btn-sm btn-outline-primary">Download Proposal</a></p>`
+              : ""
+          }
+          ${
+            p.budget_file
+              ? `<p><a href="${p.budget_file}" target="_blank" class="btn btn-sm btn-outline-secondary">Download Budget</a></p>`
+              : ""
+          }
+          ${
+            p.revised_file
+              ? `<p><a href="${p.revised_file}" target="_blank" class="btn btn-sm btn-outline-secondary">Download Revised</a></p>`
+              : ""
+          }
+        </div>
+      </div>
+      
+      <hr>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <h6>Evaluators</h6>
+          <div class="evaluator-list">
+            ${evaluatorsHtml}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h6>Timeline</h6>
+          <div class="timeline-list">
+            ${timelineHtml}
+          </div>
+        </div>
+      </div>
+    `;
+
+    detailModal.show();
+  }
 </script>
 {% endblock %}

@@ -19,17 +19,21 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from proposals.urls import external_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
-    path('api/proposals/', include('proposals.urls')),
+    path('api/', include('proposals.urls')),
+    
+    # External form pages (token-based, no auth)
+    *external_urlpatterns,
     
     # Frontend Pages
     path('login/', TemplateView.as_view(template_name='login.html'), name='login'),
     path('dashboard/', TemplateView.as_view(template_name='participant_dashboard.html'), name='dashboard'),
     path('admin-dashboard/', TemplateView.as_view(template_name='admin_dashboard.html'), name='admin_dashboard'),
-    path('', TemplateView.as_view(template_name='login.html')), # Default to login
+    path('', TemplateView.as_view(template_name='login.html')),  # Default to login
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

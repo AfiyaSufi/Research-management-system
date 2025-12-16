@@ -1,167 +1,1594 @@
-{% extends 'base.html' %} {% block content %}
-<h2>Participant Dashboard</h2>
-<button class="btn btn-primary mb-3" onclick="showUploadModal()">
-  New Proposal
-</button>
+{% extends 'base.html' %} {% block styles %}
+<style>
+  /* ===== CSS Variables (RMS Design System) ===== */
+  :root {
+    --primary: #5a63ea;
+    --primary-dark: #4f56d1;
+    --primary-light: #7f89ff;
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --sidebar-bg: linear-gradient(180deg, #1e1e2d 0%, #1a1a27 100%);
+    --sidebar-width: 260px;
+    --header-height: 70px;
+    --text-dark: #0f172a;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --border-color: #e5e7eb;
+    --bg-light: #f5f6fb;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+  }
 
-<div id="proposals-list"></div>
+  /* ===== Layout ===== */
+  body {
+    background: var(--bg-light);
+    overflow-x: hidden;
+  }
 
-<!-- Upload Modal (Simplified as a form section for now) -->
-<div id="upload-section" style="display: none" class="card p-3 mb-3">
-  <h4>Submit Proposal</h4>
-  <form id="proposal-form">
-    <div class="mb-3">
-      <label>Title</label>
-      <input type="text" id="p-title" class="form-control" required />
+  #main-navbar {
+    display: none !important;
+  }
+
+  .participant-layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar-brand {
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar-brand-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+
+  .sidebar-brand-text {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .sidebar-brand-text small {
+    display: block;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+    font-size: 0.75rem;
+  }
+
+  .sidebar-nav {
+    padding: 20px 16px;
+    flex: 1;
+  }
+
+  .nav-section-title {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    padding: 16px 12px 8px;
+    margin: 0;
+  }
+
+  .nav-item {
+    margin-bottom: 4px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.65);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .nav-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+
+  .nav-link.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(90, 99, 234, 0.4);
+  }
+
+  .nav-link svg {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+  }
+
+  .nav-link.active svg {
+    opacity: 1;
+  }
+
+  .nav-badge {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .nav-link.active .nav-badge {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  .sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+  }
+
+  .sidebar-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--primary);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .sidebar-user-info {
+    flex: 1;
+  }
+
+  .sidebar-user-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .sidebar-user-role {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+  }
+
+  /* ===== Main Content ===== */
+  .main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-header {
+    height: var(--header-height);
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 1.4rem;
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .btn-logout {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-logout:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
+  }
+
+  /* ===== Page Content ===== */
+  .page-content {
+    padding: 32px;
+    flex: 1;
+  }
+
+  .tab-content-section {
+    display: none;
+  }
+
+  .tab-content-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ===== Cards ===== */
+  .card {
+    background: #fff;
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .card-body {
+    padding: 24px;
+  }
+
+  /* ===== Buttons ===== */
+  .btn-primary {
+    background: var(--primary);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(90, 99, 234, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+  }
+
+  .btn-outline-primary {
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    background: transparent;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline-primary:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* ===== Status Badges ===== */
+  .status-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .status-pending {
+    background: #fef3c7;
+    color: #d97706;
+  }
+  .status-pending::before {
+    background: #f59e0b;
+  }
+
+  .status-accepted {
+    background: #d1fae5;
+    color: #059669;
+  }
+  .status-accepted::before {
+    background: #10b981;
+  }
+
+  .status-rejected {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+  .status-rejected::before {
+    background: #ef4444;
+  }
+
+  /* ===== Step Progress Bar ===== */
+  .step-progress {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin: 16px 0;
+  }
+
+  .step-item {
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-light);
+    border: 2px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+  }
+
+  .step-item.completed .step-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+  }
+
+  .step-item.current .step-circle {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(90, 99, 234, 0.4);
+  }
+
+  .step-item.rejected .step-circle {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+  }
+
+  .step-label {
+    font-size: 0.65rem;
+    color: var(--text-light);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .step-item.completed .step-label,
+  .step-item.current .step-label {
+    color: var(--text-dark);
+    font-weight: 500;
+  }
+
+  .step-item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border-color);
+    z-index: 1;
+  }
+
+  .step-item.completed:not(:last-child)::after {
+    background: var(--success);
+  }
+
+  /* ===== Proposal Cards ===== */
+  .proposal-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .proposal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .proposal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .proposal-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    margin: 0 0 4px 0;
+  }
+
+  .proposal-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .proposal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  /* ===== Action Required Banner ===== */
+  .action-banner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .action-banner svg {
+    color: #d97706;
+    flex-shrink: 0;
+  }
+
+  .action-banner-text {
+    flex: 1;
+    font-size: 0.9rem;
+    color: #92400e;
+    font-weight: 500;
+  }
+
+  /* ===== Notice Cards ===== */
+  .notice-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--primary);
+  }
+
+  .notice-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    margin: 0 0 8px 0;
+  }
+
+  .notice-deadline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .notice-description {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .deadline-urgent {
+    color: var(--danger);
+    font-weight: 600;
+  }
+
+  /* ===== Form Controls ===== */
+  .form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+  }
+
+  .form-control,
+  .form-select {
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(90, 99, 234, 0.1);
+  }
+
+  /* ===== Modals ===== */
+  .modal-content {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid var(--border-color);
+    padding: 24px 28px;
+  }
+
+  .modal-title {
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+
+  .modal-body {
+    padding: 28px;
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--border-color);
+    padding: 20px 28px;
+  }
+
+  /* ===== Toast Notifications ===== */
+  .toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 380px;
+  }
+
+  .toast {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+    position: relative;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .toast.hiding {
+    animation: slideOut 0.3s ease forwards;
+  }
+
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  .toast-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+  }
+
+  .toast-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+  }
+
+  .toast-body {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+  }
+
+  /* ===== Empty State ===== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .empty-state svg {
+    width: 80px;
+    height: 80px;
+    color: var(--text-light);
+    margin-bottom: 20px;
+  }
+
+  .empty-state h5 {
+    color: var(--text-dark);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  /* ===== Timeline in Modal ===== */
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+  }
+
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+  }
+
+  .timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -26px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(90, 99, 234, 0.3);
+  }
+
+  .timeline-item.completed::before {
+    background: var(--success);
+  }
+
+  .timeline-item.rejected::before {
+    background: var(--danger);
+  }
+
+  .timeline-date {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-bottom: 4px;
+  }
+
+  .timeline-content {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+  }
+
+  .timeline-details {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ===== Evaluation Feedback ===== */
+  .feedback-card {
+    background: var(--bg-light);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .feedback-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .feedback-evaluator {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+  }
+
+  .feedback-marks {
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .feedback-comment {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 992px) {
+    .sidebar {
+      transform: translateX(-100%);
+    }
+    .sidebar.show {
+      transform: translateX(0);
+    }
+    .main-content {
+      margin-left: 0;
+    }
+    .mobile-toggle {
+      display: block !important;
+    }
+  }
+
+  .mobile-toggle {
+    display: none;
+    background: none;
+    border: none;
+    padding: 8px;
+    color: var(--text-dark);
+    cursor: pointer;
+  }
+</style>
+{% endblock %} {% block content %}
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="participant-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">R</div>
+      <div class="sidebar-brand-text">
+        RMS
+        <small>Research Management</small>
+      </div>
     </div>
-    <div class="mb-3">
-      <label>Description</label>
-      <textarea id="p-desc" class="form-control" required></textarea>
+
+    <nav class="sidebar-nav">
+      <p class="nav-section-title">Menu</p>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a
+            class="nav-link active"
+            onclick="switchTab('proposals')"
+            id="nav-proposals"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <span>My Proposals</span>
+            <span class="nav-badge" id="proposalCount">0</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" onclick="switchTab('notices')" id="nav-notices">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
+            </svg>
+            <span>Notices</span>
+            <span class="nav-badge" id="noticeCount">0</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" onclick="switchTab('submit')" id="nav-submit">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            <span>Submit New</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">User</div>
+          <div class="sidebar-user-role">Participant</div>
+        </div>
+      </div>
     </div>
-    <div class="mb-3">
-      <label>File</label>
-      <input type="file" id="p-file" class="form-control" required />
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Header -->
+    <header class="main-header">
+      <button class="mobile-toggle" onclick="toggleSidebar()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+      <h1 class="header-title" id="pageTitle">My Proposals</h1>
+      <div class="header-actions">
+        <button class="btn-logout" onclick="logout()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+          </svg>
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      <!-- My Proposals Tab -->
+      <div id="tab-proposals" class="tab-content-section active">
+        <div id="proposalsList">
+          <!-- Proposals will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Notices Tab -->
+      <div id="tab-notices" class="tab-content-section">
+        <div id="noticesList">
+          <!-- Notices will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Submit New Tab -->
+      <div id="tab-submit" class="tab-content-section">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title">Submit New Proposal</h5>
+          </div>
+          <div class="card-body">
+            <form id="proposalForm">
+              <div class="mb-3">
+                <label for="title" class="form-label">Proposal Title</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="title"
+                  placeholder="Enter your proposal title"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea
+                  class="form-control"
+                  id="description"
+                  rows="4"
+                  placeholder="Describe your research proposal..."
+                  required
+                ></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="notice" class="form-label">Select Notice</label>
+                <select class="form-select" id="notice" required>
+                  <option value="">Select a notice...</option>
+                </select>
+              </div>
+              <div class="mb-4">
+                <label for="proposalFile" class="form-label"
+                  >Proposal Document (PDF)</label
+                >
+                <input
+                  type="file"
+                  class="form-control"
+                  id="proposalFile"
+                  accept=".pdf"
+                  required
+                />
+                <div class="form-text">
+                  Upload your proposal document in PDF format
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  style="margin-right: 8px"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+                Submit Proposal
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-    <button type="submit" class="btn btn-success">Submit</button>
-    <button type="button" class="btn btn-secondary" onclick="hideUploadModal()">
-      Cancel
-    </button>
-  </form>
+  </main>
 </div>
 
 <!-- Budget Upload Modal -->
-<div id="budget-section" style="display: none" class="card p-3 mb-3">
-  <h4>Upload Budget & Revised Proposal</h4>
-  <form id="budget-form">
-    <input type="hidden" id="budget-proposal-id" />
-    <div class="mb-3">
-      <label>Revised Proposal</label>
-      <input type="file" id="b-revised" class="form-control" />
+<div class="modal fade" id="budgetModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Upload Budget & Revised Proposal</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-4">
+          Your proposal has been approved! Please upload the required budget
+          document and revised proposal.
+        </p>
+        <form id="budgetForm">
+          <input type="hidden" id="budgetProposalId" />
+          <div class="mb-3">
+            <label for="budgetFile" class="form-label"
+              >Budget Document (PDF)</label
+            >
+            <input
+              type="file"
+              class="form-control"
+              id="budgetFile"
+              accept=".pdf"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="revisedProposal" class="form-label"
+              >Revised Proposal (PDF)</label
+            >
+            <input
+              type="file"
+              class="form-control"
+              id="revisedProposal"
+              accept=".pdf"
+              required
+            />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          data-bs-dismiss="modal"
+        >
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" onclick="submitBudget()">
+          Upload Documents
+        </button>
+      </div>
     </div>
-    <div class="mb-3">
-      <label>Budget</label>
-      <input type="file" id="b-budget" class="form-control" />
+  </div>
+</div>
+
+<!-- Proposal Detail Modal -->
+<div class="modal fade" id="proposalDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailModalTitle">Proposal Details</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body" id="detailModalBody">
+        <!-- Content loaded dynamically -->
+      </div>
     </div>
-    <button type="submit" class="btn btn-success">Upload</button>
-    <button type="button" class="btn btn-secondary" onclick="hideBudgetModal()">
-      Cancel
-    </button>
-  </form>
+  </div>
 </div>
 
 {% endblock %} {% block scripts %}
 <script>
-  function showUploadModal() {
-    document.getElementById("upload-section").style.display = "block";
-  }
-  function hideUploadModal() {
-    document.getElementById("upload-section").style.display = "none";
+  // ===== Constants =====
+  const STEP_LABELS = [
+    "Submitted",
+    "Initial Review",
+    "Evaluation",
+    "Final Review",
+    "Budget Upload",
+    "Complete",
+  ];
+
+  let proposals = [];
+  let notices = [];
+  let budgetModal, detailModal;
+
+  // ===== Initialize =====
+  document.addEventListener("DOMContentLoaded", function () {
+    // Check auth
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role?.toUpperCase() !== "PARTICIPANT") {
+      window.location.href = "/";
+      return;
+    }
+
+    // Set user info
+    const username = localStorage.getItem("username") || "User";
+    document.getElementById("userName").textContent = username;
+    document.getElementById("userAvatar").textContent = username
+      .charAt(0)
+      .toUpperCase();
+
+    // Initialize modals
+    budgetModal = new bootstrap.Modal(document.getElementById("budgetModal"));
+    detailModal = new bootstrap.Modal(
+      document.getElementById("proposalDetailModal")
+    );
+
+    // Load data
+    loadProposals();
+    loadNotices();
+
+    // Setup form submission
+    document
+      .getElementById("proposalForm")
+      .addEventListener("submit", submitProposal);
+  });
+
+  // ===== Tab Navigation =====
+  function switchTab(tabName) {
+    // Update nav links
+    document
+      .querySelectorAll(".nav-link")
+      .forEach((link) => link.classList.remove("active"));
+    document.getElementById(`nav-${tabName}`).classList.add("active");
+
+    // Update content sections
+    document
+      .querySelectorAll(".tab-content-section")
+      .forEach((section) => section.classList.remove("active"));
+    document.getElementById(`tab-${tabName}`).classList.add("active");
+
+    // Update header title
+    const titles = {
+      proposals: "My Proposals",
+      notices: "Notices",
+      submit: "Submit New Proposal",
+    };
+    document.getElementById("pageTitle").textContent = titles[tabName];
   }
 
-  function showBudgetModal(id) {
-    document.getElementById("budget-section").style.display = "block";
-    document.getElementById("budget-proposal-id").value = id;
-  }
-  function hideBudgetModal() {
-    document.getElementById("budget-section").style.display = "none";
+  function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("show");
   }
 
+  // ===== Load Proposals =====
   async function loadProposals() {
     try {
       const res = await axios.get(`${API_URL}/proposals/`);
-      const list = document.getElementById("proposals-list");
-      list.innerHTML = "";
-      res.data.forEach((p) => {
-        let actions = "";
-        if (p.current_step === 5 && p.status !== "REJECTED") {
-          actions = `<button class="btn btn-sm btn-warning" onclick="showBudgetModal(${p.id})">Upload Budget</button>`;
-        }
-
-        list.innerHTML += `
-                    <div class="step-card">
-                        <h5>${p.title} <span class="badge bg-secondary">${
-          p.status
-        }</span></h5>
-                        <p>Step: ${p.current_step}</p>
-                        <p>${p.description}</p>
-                        ${actions}
-                        <hr>
-                        <h6>Timeline</h6>
-                        <ul>
-                            ${p.timeline
-                              .map(
-                                (t) =>
-                                  `<li>${t.step_name}: ${t.action} - ${
-                                    t.details || ""
-                                  } (${new Date(
-                                    t.timestamp
-                                  ).toLocaleString()})</li>`
-                              )
-                              .join("")}
-                        </ul>
-                    </div>
-                `;
-      });
+      proposals = res.data;
+      document.getElementById("proposalCount").textContent = proposals.length;
+      renderProposals();
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load proposals:", err);
+      showToast("Failed to load proposals", "error");
     }
   }
 
-  document
-    .getElementById("proposal-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData();
-      formData.append("title", document.getElementById("p-title").value);
-      formData.append("description", document.getElementById("p-desc").value);
-      formData.append(
-        "proposal_file",
-        document.getElementById("p-file").files[0]
+  function renderProposals() {
+    const container = document.getElementById("proposalsList");
+
+    if (proposals.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h5>No Proposals Yet</h5>
+          <p>You haven't submitted any proposals. Start by submitting a new proposal.</p>
+          <button class="btn btn-primary" onclick="switchTab('submit')">Submit Proposal</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = proposals
+      .map((p) => {
+        const statusClass =
+          p.status === "ACCEPTED"
+            ? "status-accepted"
+            : p.status === "REJECTED"
+            ? "status-rejected"
+            : "status-pending";
+
+        // Build step progress
+        const stepProgress = buildStepProgress(p.current_step, p.status);
+
+        // Action banner for step 5
+        const actionBanner =
+          p.current_step === 5 && p.status !== "REJECTED"
+            ? `
+        <div class="action-banner">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span class="action-banner-text">Action Required: Please upload your budget and revised proposal</span>
+          <button class="btn btn-warning btn-sm" onclick="openBudgetModal(${p.id})">Upload Now</button>
+        </div>
+      `
+            : "";
+
+        return `
+        <div class="proposal-card">
+          <div class="proposal-header">
+            <div>
+              <h4 class="proposal-title">${escapeHtml(p.title)}</h4>
+              <p class="proposal-meta">Submitted ${formatDate(p.created_at)}</p>
+            </div>
+            <span class="status-badge ${statusClass}">${p.status}</span>
+          </div>
+          ${stepProgress}
+          <div class="proposal-actions">
+            <button class="btn btn-outline-primary btn-sm" onclick="viewProposalDetails(${
+              p.id
+            })">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 4px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              View Details
+            </button>
+          </div>
+          ${actionBanner}
+        </div>
+      `;
+      })
+      .join("");
+  }
+
+  function buildStepProgress(currentStep, status) {
+    let html = '<div class="step-progress">';
+
+    for (let i = 1; i <= 6; i++) {
+      let stepClass = "";
+      if (status === "REJECTED" && i === currentStep) {
+        stepClass = "rejected";
+      } else if (i < currentStep) {
+        stepClass = "completed";
+      } else if (i === currentStep) {
+        stepClass = "current";
+      }
+
+      html += `
+        <div class="step-item ${stepClass}">
+          <div class="step-circle">${i}</div>
+          <span class="step-label">${STEP_LABELS[i - 1]}</span>
+        </div>
+      `;
+    }
+
+    html += "</div>";
+    return html;
+  }
+
+  // ===== Load Notices =====
+  async function loadNotices() {
+    try {
+      const res = await axios.get(`${API_URL}/notices/`);
+      // Filter only active notices
+      notices = res.data.filter((n) => n.is_active);
+      document.getElementById("noticeCount").textContent = notices.length;
+      renderNotices();
+      populateNoticeDropdown();
+    } catch (err) {
+      console.error("Failed to load notices:", err);
+    }
+  }
+
+  function renderNotices() {
+    const container = document.getElementById("noticesList");
+
+    if (notices.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <h5>No Active Notices</h5>
+          <p>There are no open calls for proposals at the moment.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = notices
+      .map((n) => {
+        const deadline = new Date(n.deadline);
+        const now = new Date();
+        const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+        const deadlineClass = daysLeft <= 3 ? "deadline-urgent" : "";
+        const deadlineText =
+          daysLeft <= 0
+            ? "Deadline passed"
+            : daysLeft === 1
+            ? "1 day left"
+            : `${daysLeft} days left`;
+
+        return `
+        <div class="notice-card">
+          <h4 class="notice-title">${escapeHtml(n.title)}</h4>
+          <div class="notice-deadline ${deadlineClass}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Deadline: ${formatDate(n.deadline)} (${deadlineText})
+          </div>
+          <p class="notice-description">${escapeHtml(
+            n.description || "No description available"
+          )}</p>
+          <button class="btn btn-primary btn-sm" onclick="applyToNotice(${
+            n.id
+          })">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 4px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Apply Now
+          </button>
+        </div>
+      `;
+      })
+      .join("");
+  }
+
+  function populateNoticeDropdown() {
+    const select = document.getElementById("notice");
+    select.innerHTML =
+      '<option value="">Select a notice...</option>' +
+      notices
+        .map((n) => `<option value="${n.id}">${escapeHtml(n.title)}</option>`)
+        .join("");
+  }
+
+  function applyToNotice(noticeId) {
+    document.getElementById("notice").value = noticeId;
+    switchTab("submit");
+  }
+
+  // ===== Submit Proposal =====
+  async function submitProposal(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("title", document.getElementById("title").value);
+    formData.append(
+      "description",
+      document.getElementById("description").value
+    );
+    formData.append("notice", document.getElementById("notice").value);
+    formData.append(
+      "proposal_file",
+      document.getElementById("proposalFile").files[0]
+    );
+
+    try {
+      await axios.post(`${API_URL}/proposals/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      showToast("Proposal submitted successfully!", "success");
+      document.getElementById("proposalForm").reset();
+      loadProposals();
+      switchTab("proposals");
+    } catch (err) {
+      console.error("Submission failed:", err);
+      showToast("Failed to submit proposal. Please try again.", "error");
+    }
+  }
+
+  // ===== Budget Upload =====
+  function openBudgetModal(proposalId) {
+    document.getElementById("budgetProposalId").value = proposalId;
+    document.getElementById("budgetForm").reset();
+    budgetModal.show();
+  }
+
+  async function submitBudget() {
+    const proposalId = document.getElementById("budgetProposalId").value;
+    const budgetFile = document.getElementById("budgetFile").files[0];
+    const revisedFile = document.getElementById("revisedProposal").files[0];
+
+    if (!budgetFile || !revisedFile) {
+      showToast("Please select both files", "error");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("budget_file", budgetFile);
+    formData.append("revised_file", revisedFile);
+
+    try {
+      await axios.post(
+        `${API_URL}/proposals/${proposalId}/upload_budget/`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
       );
 
-      try {
-        await axios.post(`${API_URL}/proposals/`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        hideUploadModal();
-        loadProposals();
-      } catch (err) {
-        alert("Submission failed");
-      }
-    });
+      budgetModal.hide();
+      showToast("Documents uploaded successfully!", "success");
+      loadProposals();
+    } catch (err) {
+      console.error("Upload failed:", err);
+      showToast("Failed to upload documents. Please try again.", "error");
+    }
+  }
 
-  document
-    .getElementById("budget-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const id = document.getElementById("budget-proposal-id").value;
-      const formData = new FormData();
-      if (document.getElementById("b-revised").files[0])
-        formData.append(
-          "revised_file",
-          document.getElementById("b-revised").files[0]
-        );
-      if (document.getElementById("b-budget").files[0])
-        formData.append(
-          "budget_file",
-          document.getElementById("b-budget").files[0]
-        );
+  // ===== View Proposal Details =====
+  function viewProposalDetails(proposalId) {
+    const proposal = proposals.find((p) => p.id === proposalId);
+    if (!proposal) return;
 
-      try {
-        await axios.post(
-          `${API_URL}/proposals/${id}/upload_budget/`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
+    document.getElementById("detailModalTitle").textContent = proposal.title;
+
+    // Build timeline
+    let timelineHtml = '<h6 class="mb-3">Timeline</h6><div class="timeline">';
+    if (proposal.timeline && proposal.timeline.length > 0) {
+      proposal.timeline.forEach((t) => {
+        const itemClass = t.action.includes("Rejected")
+          ? "rejected"
+          : "completed";
+        timelineHtml += `
+          <div class="timeline-item ${itemClass}">
+            <div class="timeline-date">${formatDateTime(t.timestamp)}</div>
+            <div class="timeline-content"><strong>${t.step_name}</strong>: ${
+          t.action
+        }</div>
+            ${
+              t.details
+                ? `<div class="timeline-details">${escapeHtml(t.details)}</div>`
+                : ""
+            }
+          </div>
+        `;
+      });
+    } else {
+      timelineHtml += '<p class="text-muted">No timeline events yet.</p>';
+    }
+    timelineHtml += "</div>";
+
+    // Build evaluations section (anonymous - no names shown)
+    let evaluationsHtml = "";
+    if (proposal.evaluations && proposal.evaluations.length > 0) {
+      evaluationsHtml =
+        '<hr class="my-4"><h6 class="mb-3">Evaluation Feedback</h6>';
+      proposal.evaluations.forEach((ev, index) => {
+        evaluationsHtml += `
+          <div class="feedback-card">
+            <div class="feedback-header">
+              <span class="feedback-evaluator">Evaluator ${index + 1}</span>
+              <span class="feedback-marks">${ev.marks} / 100</span>
+            </div>
+            ${
+              ev.comments
+                ? `<p class="feedback-comment">${escapeHtml(ev.comments)}</p>`
+                : '<p class="feedback-comment text-muted">No comments provided</p>'
+            }
+          </div>
+        `;
+      });
+    }
+
+    document.getElementById("detailModalBody").innerHTML = `
+      <div class="mb-4">
+        <p class="text-muted mb-2">${escapeHtml(proposal.description)}</p>
+        <div class="d-flex gap-3">
+          <span class="status-badge ${
+            proposal.status === "ACCEPTED"
+              ? "status-accepted"
+              : proposal.status === "REJECTED"
+              ? "status-rejected"
+              : "status-pending"
+          }">${proposal.status}</span>
+          <span class="text-muted">Step ${proposal.current_step} of 6</span>
+        </div>
+      </div>
+      ${buildStepProgress(proposal.current_step, proposal.status)}
+      ${timelineHtml}
+      ${evaluationsHtml}
+    `;
+
+    detailModal.show();
+  }
+
+  // ===== Utilities =====
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("username");
+    window.location.href = "/";
+  }
+
+  function showToast(message, type = "success") {
+    const container = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <div class="toast-body">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          ${
+            type === "success"
+              ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />'
+              : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />'
           }
-        );
-        hideBudgetModal();
-        loadProposals();
-      } catch (err) {
-        alert("Upload failed");
-      }
-    });
+        </svg>
+        ${message}
+      </div>
+    `;
+    container.appendChild(toast);
 
-  loadProposals();
+    setTimeout(() => {
+      toast.classList.add("hiding");
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  function formatDateTime(dateStr) {
+    return new Date(dateStr).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
 </script>
 {% endblock %}
