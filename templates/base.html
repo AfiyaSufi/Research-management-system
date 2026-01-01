@@ -99,6 +99,20 @@
       const API_URL = "/api";
       const token = localStorage.getItem("token");
 
+      // Configure axios to disable caching
+      axios.defaults.headers.common["Cache-Control"] = "no-cache";
+      axios.defaults.headers.common["Pragma"] = "no-cache";
+      axios.defaults.headers.common["Expires"] = "0";
+      
+      // Add interceptor to add timestamp to all GET requests
+      axios.interceptors.request.use(function (config) {
+        if (config.method === 'get') {
+          config.params = config.params || {};
+          config.params._t = new Date().getTime();
+        }
+        return config;
+      });
+
       if (token) {
         axios.defaults.headers.common["Authorization"] = `Token ${token}`;
         document.getElementById("logout-btn").style.display = "inline-flex";

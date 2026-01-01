@@ -221,18 +221,26 @@ class ProposalSerializer(serializers.ModelSerializer):
 
 
 class ProposalListSerializer(serializers.ModelSerializer):
-    """Lighter serializer for listing proposals"""
+    """Lighter serializer for listing proposals - includes evaluations for admin dashboard"""
     participant_name = serializers.ReadOnlyField(source='participant.username')
     notice_title = serializers.ReadOnlyField(source='notice.title')
     step_display = serializers.SerializerMethodField()
+    evaluations = EvaluatorSerializer(many=True, read_only=True)
+    committee_reviews = CommitteeReviewSerializer(many=True, read_only=True)
+    evaluator_average = serializers.SerializerMethodField()
 
     class Meta:
         model = Proposal
         fields = ['id', 'title', 'participant_name', 'notice_title', 'status', 
-                  'current_step', 'step_display', 'created_at', 'updated_at']
+                  'current_step', 'step_display', 'created_at', 'updated_at',
+                  'evaluations', 'committee_reviews', 'evaluator_average',
+                  'proposal_file', 'budget_file', 'revised_file', 'plagiarism_percentage']
 
     def get_step_display(self, obj):
         return dict(obj.STEP_CHOICES).get(obj.current_step, 'Unknown')
+
+    def get_evaluator_average(self, obj):
+        return obj.get_evaluator_average()
 
 
 class ParticipantProposalSerializer(serializers.ModelSerializer):

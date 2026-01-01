@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Committee Review Form{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0"><i class="fas fa-users"></i> Research Committee Review Form</h3>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i> {{ error }}
+                        </div>
+                    {% elif success %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> {{ success }}
+                            <hr>
+                            <p class="mb-0">Thank you for your review. You can now close this page.</p>
+                        </div>
+                    {% else %}
+                        <!-- Committee Member Info -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <h5 class="text-success mb-3">Committee Member Information</h5>
+                            <p><strong>Name:</strong> {{ review.name }}</p>
+                            <p><strong>Email:</strong> {{ review.email }}</p>
+                            <p class="mb-0"><strong>Participant:</strong> {{ review.participant_name }}</p>
+                        </div>
+
+                        <!-- Proposal Details -->
+                        <div class="mb-4 p-3 border rounded">
+                            <h5 class="text-success mb-3">Proposal Details</h5>
+                            <p><strong>Title:</strong> {{ review.proposal_title }}</p>
+                            <p><strong>Description:</strong></p>
+                            <p class="text-muted">{{ review.proposal_description }}</p>
+                            
+                            <div class="mt-3">
+                                {% if review.proposal_file_url %}
+                                    <a href="{{ review.proposal_file_url }}" class="btn btn-outline-primary btn-sm me-2" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> Original Proposal
+                                    </a>
+                                {% endif %}
+                                {% if review.budget_file_url %}
+                                    <a href="{{ review.budget_file_url }}" class="btn btn-outline-success btn-sm me-2" target="_blank">
+                                        <i class="fas fa-file-invoice-dollar"></i> Budget File
+                                    </a>
+                                {% endif %}
+                                {% if review.revised_file_url %}
+                                    <a href="{{ review.revised_file_url }}" class="btn btn-outline-info btn-sm" target="_blank">
+                                        <i class="fas fa-file-alt"></i> Revised Proposal
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Review Form -->
+                        <form method="POST">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="decision" class="form-label">Decision <span class="text-danger">*</span></label>
+                                <select class="form-select" id="decision" name="decision" required>
+                                    <option value="">-- Select Decision --</option>
+                                    <option value="APPROVED" class="text-success">✓ Approved</option>
+                                    <option value="REVISION_REQUIRED" class="text-warning">⚠ Revision Required</option>
+                                    <option value="REJECTED" class="text-danger">✗ Rejected</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="comments" class="form-label">Comments</label>
+                                <textarea class="form-control" 
+                                          id="comments" 
+                                          name="comments" 
+                                          rows="6" 
+                                          placeholder="Enter your review comments (optional)"></textarea>
+                                <div class="form-text">
+                                    Please provide detailed feedback, especially if revision is required or if rejecting.
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-paper-plane"></i> Submit Review
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Status Info -->
+                        <div class="mt-3 text-muted small">
+                            <p class="mb-1"><strong>Status:</strong> {{ review.status }}</p>
+                            <p class="mb-0"><strong>Expires at:</strong> {{ review.expires_at|date:"F d, Y H:i" }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    .form-select option {
+        padding: 10px;
+    }
+</style>
+{% endblock %}

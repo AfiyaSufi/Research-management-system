@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, status, decorators, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from .models import Proposal, ProposalTimeline, Notice, Evaluator, CommitteeReview, RectorReview
 from .serializers import (
@@ -399,36 +399,73 @@ class EvaluatorFormView(APIView):
         evaluator = get_object_or_404(Evaluator, token=token)
         
         if evaluator.is_expired:
-            return Response({'error': 'This link has expired'}, status=status.HTTP_410_GONE)
+            context = {
+                'error': 'This link has expired',
+                'evaluator': None
+            }
+            return render(request, 'evaluator_form.html', context)
         
         if evaluator.status == 'COMPLETED':
-            return Response({'error': 'Evaluation already submitted'}, status=status.HTTP_400_BAD_REQUEST)
+            context = {
+                'error': 'Evaluation already submitted',
+                'evaluator': None
+            }
+            return render(request, 'evaluator_form.html', context)
         
+        # Prepare context data for the template
         serializer = EvaluatorDetailSerializer(evaluator, context={'request': request})
-        return Response(serializer.data)
+        context = {
+            'evaluator': serializer.data,
+            'error': None,
+            'success': None
+        }
+        return render(request, 'evaluator_form.html', context)
     
     def post(self, request, token):
         """Submit evaluation"""
         evaluator = get_object_or_404(Evaluator, token=token)
         
         if evaluator.is_expired:
-            return Response({'error': 'This link has expired'}, status=status.HTTP_410_GONE)
+            context = {
+                'error': 'This link has expired',
+                'evaluator': None
+            }
+            return render(request, 'evaluator_form.html', context)
         
         if evaluator.status == 'COMPLETED':
-            return Response({'error': 'Evaluation already submitted'}, status=status.HTTP_400_BAD_REQUEST)
+            context = {
+                'error': 'Evaluation already submitted',
+                'evaluator': None
+            }
+            return render(request, 'evaluator_form.html', context)
         
-        marks = request.data.get('marks')
-        comments = request.data.get('comments', '')
+        marks = request.POST.get('marks')
+        comments = request.POST.get('comments', '')
         
-        if marks is None:
-            return Response({'error': 'Marks are required'}, status=status.HTTP_400_BAD_REQUEST)
+        if marks is None or marks == '':
+            serializer = EvaluatorDetailSerializer(evaluator, context={'request': request})
+            context = {
+                'error': 'Marks are required',
+                'evaluator': serializer.data
+            }
+            return render(request, 'evaluator_form.html', context)
         
         try:
             marks = float(marks)
             if marks < 0 or marks > 100:
-                return Response({'error': 'Marks must be between 0 and 100'}, status=status.HTTP_400_BAD_REQUEST)
+                serializer = EvaluatorDetailSerializer(evaluator, context={'request': request})
+                context = {
+                    'error': 'Marks must be between 0 and 100',
+                    'evaluator': serializer.data
+                }
+                return render(request, 'evaluator_form.html', context)
         except ValueError:
-            return Response({'error': 'Invalid marks value'}, status=status.HTTP_400_BAD_REQUEST)
+            serializer = EvaluatorDetailSerializer(evaluator, context={'request': request})
+            context = {
+                'error': 'Invalid marks value',
+                'evaluator': serializer.data
+            }
+            return render(request, 'evaluator_form.html', context)
         
         evaluator.marks = marks
         evaluator.comments = comments
@@ -445,7 +482,13 @@ class EvaluatorFormView(APIView):
             details=f'Marks: {marks}/100'
         )
         
-        return Response({'status': 'success', 'message': 'Evaluation submitted successfully'})
+        context = {
+            'success': 'Evaluation submitted successfully',
+            'evaluator': None,
+            'error': None
+        }
+        return render(request, 'evaluator_form.html', context)
+
 
 
 class CommitteeFormView(APIView):
@@ -457,29 +500,55 @@ class CommitteeFormView(APIView):
         review = get_object_or_404(CommitteeReview, token=token)
         
         if timezone.now() > review.expires_at and review.status == 'PENDING':
-            return Response({'error': 'This link has expired'}, status=status.HTTP_410_GONE)
+            context = {
+                'error': 'This link has expired',
+                'review': None
+            }
+            return render(request, 'committee_form.html', context)
         
         if review.status == 'COMPLETED':
-            return Response({'error': 'Review already submitted'}, status=status.HTTP_400_BAD_REQUEST)
+            context = {
+                'error': 'Review already submitted',
+                'review': None
+            }
+            return render(request, 'committee_form.html', context)
         
         serializer = CommitteeReviewDetailSerializer(review, context={'request': request})
-        return Response(serializer.data)
+        context = {
+            'review': serializer.data,
+            'error': None,
+            'success': None
+        }
+        return render(request, 'committee_form.html', context)
     
     def post(self, request, token):
         """Submit committee review"""
         review = get_object_or_404(CommitteeReview, token=token)
         
         if timezone.now() > review.expires_at and review.status == 'PENDING':
-            return Response({'error': 'This link has expired'}, status=status.HTTP_410_GONE)
+            context = {
+                'error': 'This link has expired',
+                'review': None
+            }
+            return render(request, 'committee_form.html', context)
         
         if review.status == 'COMPLETED':
-            return Response({'error': 'Review already submitted'}, status=status.HTTP_400_BAD_REQUEST)
+            context = {
+                'error': 'Review already submitted',
+                'review': None
+            }
+            return render(request, 'committee_form.html', context)
         
-        decision = request.data.get('decision')
-        comments = request.data.get('comments', '')
+        decision = request.POST.get('decision')
+        comments = request.POST.get('comments', '')
         
         if decision not in ['APPROVED', 'REJECTED', 'REVISION_REQUIRED']:
-            return Response({'error': 'Invalid decision'}, status=status.HTTP_400_BAD_REQUEST)
+            serializer = CommitteeReviewDetailSerializer(review, context={'request': request})
+            context = {
+                'error': 'Invalid decision',
+                'review': serializer.data
+            }
+            return render(request, 'committee_form.html', context)
         
         review.decision = decision
         review.comments = comments
@@ -495,7 +564,13 @@ class CommitteeFormView(APIView):
             details=comments
         )
         
-        return Response({'status': 'success', 'message': 'Review submitted successfully'})
+        context = {
+            'success': 'Review submitted successfully',
+            'review': None,
+            'error': None
+        }
+        return render(request, 'committee_form.html', context)
+
 
 
 class RectorFormView(APIView):
@@ -507,29 +582,55 @@ class RectorFormView(APIView):
         review = get_object_or_404(RectorReview, token=token)
         
         if timezone.now() > review.expires_at and review.status == 'PENDING':
-            return Response({'error': 'This link has expired'}, status=status.HTTP_410_GONE)
+            context = {
+                'error': 'This link has expired',
+                'review': None
+            }
+            return render(request, 'rector_form.html', context)
         
         if review.status == 'COMPLETED':
-            return Response({'error': 'Decision already submitted'}, status=status.HTTP_400_BAD_REQUEST)
+            context = {
+                'error': 'Decision already submitted',
+                'review': None
+            }
+            return render(request, 'rector_form.html', context)
         
         serializer = RectorReviewDetailSerializer(review, context={'request': request})
-        return Response(serializer.data)
+        context = {
+            'review': serializer.data,
+            'error': None,
+            'success': None
+        }
+        return render(request, 'rector_form.html', context)
     
     def post(self, request, token):
         """Submit rector decision"""
         review = get_object_or_404(RectorReview, token=token)
         
         if timezone.now() > review.expires_at and review.status == 'PENDING':
-            return Response({'error': 'This link has expired'}, status=status.HTTP_410_GONE)
+            context = {
+                'error': 'This link has expired',
+                'review': None
+            }
+            return render(request, 'rector_form.html', context)
         
         if review.status == 'COMPLETED':
-            return Response({'error': 'Decision already submitted'}, status=status.HTTP_400_BAD_REQUEST)
+            context = {
+                'error': 'Decision already submitted',
+                'review': None
+            }
+            return render(request, 'rector_form.html', context)
         
-        decision = request.data.get('decision')
-        comments = request.data.get('comments', '')
+        decision = request.POST.get('decision')
+        comments = request.POST.get('comments', '')
         
         if decision not in ['APPROVED', 'REJECTED']:
-            return Response({'error': 'Invalid decision'}, status=status.HTTP_400_BAD_REQUEST)
+            serializer = RectorReviewDetailSerializer(review, context={'request': request})
+            context = {
+                'error': 'Invalid decision',
+                'review': serializer.data
+            }
+            return render(request, 'rector_form.html', context)
         
         review.decision = decision
         review.comments = comments
@@ -563,5 +664,11 @@ class RectorFormView(APIView):
             )
             send_rejection_email(proposal, 'Rector Approval', comments or 'Rejected by Rector')
         
-        return Response({'status': 'success', 'message': 'Decision submitted successfully'})
+        context = {
+            'success': 'Decision submitted successfully',
+            'review': None,
+            'error': None
+        }
+        return render(request, 'rector_form.html', context)
+
 

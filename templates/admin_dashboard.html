@@ -1896,6 +1896,27 @@
     checkAuth();
     setupNavigation();
     loadDashboard();
+    
+    // Setup auto-refresh every 30 seconds for current tab
+    setInterval(function() {
+      // Only refresh if page is visible
+      if (!document.hidden) {
+        switch(currentTab) {
+          case 'dashboard':
+            loadDashboard();
+            break;
+          case 'proposals':
+            loadProposals();
+            break;
+          case 'notices':
+            loadNotices();
+            break;
+          case 'library':
+            loadLibrary();
+            break;
+        }
+      }
+    }, 30000); // Refresh every 30 seconds
   });
 
   // ===== Authentication =====
@@ -1979,7 +2000,17 @@
   }
 
   // ===== Toast Notifications =====
+  // Track active toasts to prevent duplicates
+  let activeToasts = new Set();
+  
   function showToast(message, type = "success", duration = 4000) {
+    // Prevent duplicate toasts with the same message
+    const toastKey = `${type}:${message}`;
+    if (activeToasts.has(toastKey)) {
+      return; // Don't show duplicate toast
+    }
+    activeToasts.add(toastKey);
+    
     const container = document.querySelector(".toast-container");
     const toast = document.createElement("div");
     const toastId = "toast-" + Date.now();
@@ -2015,6 +2046,7 @@
 
     setTimeout(() => {
       dismissToast(toastId);
+      activeToasts.delete(toastKey);
     }, duration);
   }
 
@@ -3257,7 +3289,12 @@
   }
 
   // ===== Step Action Functions =====
+  let actionInProgress = {}; // Track actions in progress per proposal
+
   async function submitFormatCheck(proposalId, accepted) {
+    if (actionInProgress[`format-${proposalId}`]) return;
+    actionInProgress[`format-${proposalId}`] = true;
+    
     try {
       await axios.post(`${API_URL}/proposals/${proposalId}/format_check/`, {
         accepted,
@@ -3271,10 +3308,14 @@
         err.response?.data?.error || "Failed to submit format check",
         "error"
       );
+    } finally {
+      actionInProgress[`format-${proposalId}`] = false;
     }
   }
 
   async function submitPlagiarismCheck(proposalId) {
+    if (actionInProgress[`plagiarism-${proposalId}`]) return;
+    
     const percentage = parseFloat(
       document.getElementById(`plagiarism-${proposalId}`).value
     );
@@ -3282,6 +3323,8 @@
       showToast("Please enter a valid percentage (0-100)", "error");
       return;
     }
+
+    actionInProgress[`plagiarism-${proposalId}`] = true;
 
     try {
       const res = await axios.post(
@@ -3300,10 +3343,15 @@
         err.response?.data?.error || "Failed to submit plagiarism check",
         "error"
       );
+    } finally {
+      actionInProgress[`plagiarism-${proposalId}`] = false;
     }
   }
 
   async function completeEvaluation(proposalId) {
+    if (actionInProgress[`eval-${proposalId}`]) return;
+    actionInProgress[`eval-${proposalId}`] = true;
+    
     try {
       const res = await axios.post(
         `${API_URL}/proposals/${proposalId}/complete_evaluation/`
@@ -3320,10 +3368,15 @@
         err.response?.data?.error || "Failed to complete evaluation",
         "error"
       );
+    } finally {
+      actionInProgress[`eval-${proposalId}`] = false;
     }
   }
 
   async function submitSeminarDecision(proposalId, accepted) {
+    if (actionInProgress[`seminar-${proposalId}`]) return;
+    actionInProgress[`seminar-${proposalId}`] = true;
+    
     const attended = document.getElementById(`attended-${proposalId}`).checked;
     try {
       await axios.post(`${API_URL}/proposals/${proposalId}/seminar_decision/`, {
@@ -3339,10 +3392,15 @@
         err.response?.data?.error || "Failed to record seminar decision",
         "error"
       );
+    } finally {
+      actionInProgress[`seminar-${proposalId}`] = false;
     }
   }
 
   async function completeCommitteeReview(proposalId) {
+    if (actionInProgress[`committee-${proposalId}`]) return;
+    actionInProgress[`committee-${proposalId}`] = true;
+    
     try {
       const res = await axios.post(
         `${API_URL}/proposals/${proposalId}/complete_committee_review/`
@@ -3359,10 +3417,15 @@
         err.response?.data?.error || "Failed to complete committee review",
         "error"
       );
+    } finally {
+      actionInProgress[`committee-${proposalId}`] = false;
     }
   }
 
   async function completeRectorReview(proposalId) {
+    if (actionInProgress[`rector-${proposalId}`]) return;
+    actionInProgress[`rector-${proposalId}`] = true;
+    
     try {
       const res = await axios.post(
         `${API_URL}/proposals/${proposalId}/complete_rector_review/`
@@ -3379,6 +3442,8 @@
         err.response?.data?.error || "Failed to complete rector review",
         "error"
       );
+    } finally {
+      actionInProgress[`rector-${proposalId}`] = false;
     }
   }
 
@@ -3427,6 +3492,7 @@
 
   // Invite modal handler
   let inviteTarget = { id: null, type: null };
+  let isSubmittingInvite = false; // Prevent double submissions
 
   function showInviteModal(proposalId, type) {
     inviteTarget = { id: proposalId, type };
@@ -3445,7 +3511,7 @@
   }
 
   async function submitInvite() {
-    if (!inviteTarget.id) return;
+    if (!inviteTarget.id || isSubmittingInvite) return;
 
     const name = document.getElementById("invite-name").value.trim();
     const email = document.getElementById("invite-email").value.trim();
@@ -3454,6 +3520,8 @@
       showToast("Please enter name and email", "error");
       return;
     }
+
+    isSubmittingInvite = true; // Lock to prevent double submission
 
     try {
       let endpoint = "";
@@ -3473,13 +3541,19 @@
         "success"
       );
       inviteModal.hide();
-      loadProposals();
+      // Refresh both proposals table and dashboard
+      await loadProposals();
+      if (currentTab === 'dashboard') {
+        await loadDashboard();
+      }
     } catch (err) {
       console.error("Invite failed:", err);
       showToast(
         err.response?.data?.error || "Failed to send invitation",
         "error"
       );
+    } finally {
+      isSubmittingInvite = false; // Unlock
     }
   }
 
