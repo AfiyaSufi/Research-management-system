@@ -14,17 +14,87 @@
       <div class="hero-body">
         <p class="hero-kicker">Trusted by faculties and researchers</p>
         <h2 class="hero-title">Manage Your Research Journey Seamlessly.</h2>
-        <ul class="hero-points">
-          <li>Upload proposals, revisions, and budgets in one place.</li>
-          <li>Transparent 6-step review with clear status updates.</li>
-          <li>Email-ready workflow for evaluators and committees.</li>
-        </ul>
-
-        <div class="hero-avatars">
-          <div class="avatar">A</div>
-          <div class="avatar">B</div>
-          <div class="avatar">C</div>
-          <span class="avatar-text">Teams collaborating right now</span>
+        
+        <!-- Animated Research Illustration -->
+        <div class="hero-illustration">
+          <svg viewBox="0 0 400 300" class="research-svg" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background Elements -->
+            <defs>
+              <linearGradient id="docGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95" />
+                <stop offset="100%" style="stop-color:#e8eaff;stop-opacity:0.9" />
+              </linearGradient>
+              <linearGradient id="chartGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#a5b4fc;stop-opacity:0.8" />
+                <stop offset="100%" style="stop-color:#818cf8;stop-opacity:1" />
+              </linearGradient>
+              <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.15"/>
+              </filter>
+            </defs>
+            
+            <!-- Main Document -->
+            <g class="doc-main" filter="url(#shadow)">
+              <rect x="120" y="40" width="160" height="200" rx="12" fill="url(#docGrad)" class="float-anim"/>
+              <!-- Document Lines -->
+              <rect x="140" y="70" width="80" height="8" rx="4" fill="#c7d2fe" class="line-anim"/>
+              <rect x="140" y="90" width="120" height="6" rx="3" fill="#e0e7ff"/>
+              <rect x="140" y="106" width="100" height="6" rx="3" fill="#e0e7ff"/>
+              <rect x="140" y="122" width="110" height="6" rx="3" fill="#e0e7ff"/>
+              <!-- Checkmark Circle -->
+              <circle cx="245" cy="75" r="14" fill="#22c55e" class="pulse-anim"/>
+              <path d="M239 75 L243 79 L251 71" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Mini Chart in Document -->
+              <rect x="140" y="145" width="120" height="70" rx="6" fill="#f8fafc"/>
+              <rect x="152" y="185" width="16" height="22" rx="3" fill="url(#chartGrad)" class="bar-anim-1"/>
+              <rect x="176" y="170" width="16" height="37" rx="3" fill="url(#chartGrad)" class="bar-anim-2"/>
+              <rect x="200" y="160" width="16" height="47" rx="3" fill="url(#chartGrad)" class="bar-anim-3"/>
+              <rect x="224" y="152" width="16" height="55" rx="3" fill="url(#chartGrad)" class="bar-anim-4"/>
+            </g>
+            
+            <!-- Floating Elements -->
+            <g class="float-elements">
+              <!-- Left floating card -->
+              <g class="float-card-left" filter="url(#shadow)">
+                <rect x="40" y="100" width="70" height="50" rx="8" fill="url(#docGrad)"/>
+                <circle cx="60" cy="120" r="10" fill="#a5b4fc"/>
+                <rect x="75" y="115" width="25" height="4" rx="2" fill="#c7d2fe"/>
+                <rect x="75" y="124" width="20" height="4" rx="2" fill="#e0e7ff"/>
+              </g>
+              
+              <!-- Right floating card -->
+              <g class="float-card-right" filter="url(#shadow)">
+                <rect x="290" y="80" width="70" height="50" rx="8" fill="url(#docGrad)"/>
+                <rect x="300" y="95" width="50" height="4" rx="2" fill="#c7d2fe"/>
+                <rect x="300" y="105" width="40" height="4" rx="2" fill="#e0e7ff"/>
+                <rect x="300" y="115" width="45" height="4" rx="2" fill="#e0e7ff"/>
+              </g>
+              
+              <!-- Floating circles/dots -->
+              <circle cx="320" cy="180" r="8" fill="rgba(255,255,255,0.3)" class="dot-float-1"/>
+              <circle cx="60" cy="200" r="6" fill="rgba(255,255,255,0.25)" class="dot-float-2"/>
+              <circle cx="350" cy="120" r="5" fill="rgba(255,255,255,0.2)" class="dot-float-3"/>
+              <circle cx="80" cy="70" r="7" fill="rgba(255,255,255,0.25)" class="dot-float-4"/>
+              
+              <!-- Connection lines -->
+              <path d="M110 125 Q115 100 120 90" stroke="rgba(255,255,255,0.3)" stroke-width="2" fill="none" stroke-dasharray="4,4" class="dash-anim"/>
+              <path d="M290 105 Q285 95 280 85" stroke="rgba(255,255,255,0.3)" stroke-width="2" fill="none" stroke-dasharray="4,4" class="dash-anim"/>
+            </g>
+            
+            <!-- Magnifying glass icon -->
+            <g class="search-icon" filter="url(#shadow)">
+              <circle cx="320" cy="220" r="18" fill="url(#docGrad)"/>
+              <circle cx="316" cy="216" r="8" stroke="#818cf8" stroke-width="2.5" fill="none"/>
+              <line x1="322" y1="222" x2="328" y2="228" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+            
+            <!-- Pen/Edit icon -->
+            <g class="edit-icon" filter="url(#shadow)">
+              <circle cx="70" cy="250" r="16" fill="url(#docGrad)"/>
+              <path d="M64 256 L70 244 L76 250 L70 256 Z" fill="#818cf8"/>
+              <path d="M70 244 L74 240" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/>
+            </g>
+          </svg>
         </div>
       </div>
     </div>
@@ -174,14 +244,6 @@
           </button>
         </form>
 
-        <div class="divider"><span>Or Sign Up With</span></div>
-        <div class="social-row">
-          <button class="social-btn" type="button">G</button>
-          <button class="social-btn" type="button">F</button>
-          <button class="social-btn" type="button">In</button>
-          <button class="social-btn" type="button">X</button>
-        </div>
-
         <p class="switch-link">
           Already have an account? <a href="#" data-switch="login">Sign in</a>
         </p>
@@ -290,14 +352,6 @@
           </button>
         </form>
 
-        <div class="divider"><span>Or Sign In With</span></div>
-        <div class="social-row">
-          <button class="social-btn" type="button">G</button>
-          <button class="social-btn" type="button">F</button>
-          <button class="social-btn" type="button">In</button>
-          <button class="social-btn" type="button">X</button>
-        </div>
-
         <p class="switch-link">
           New here? <a href="#" data-switch="register">Create account</a>
         </p>
@@ -364,6 +418,7 @@
     display: flex;
     flex-direction: column;
     gap: 18px;
+    flex: 1;
   }
   .hero-kicker {
     text-transform: uppercase;
@@ -378,34 +433,107 @@
     margin: 0;
     font-size: 1.9rem;
   }
-  .hero-points {
-    padding-left: 18px;
-    margin: 0;
-    display: grid;
-    gap: 8px;
-    color: rgba(255, 255, 255, 0.9);
-  }
-  .hero-points li {
-    line-height: 1.5;
-  }
-  .hero-avatars {
+  
+  /* Hero Illustration Styles */
+  .hero-illustration {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    min-height: 200px;
     margin-top: 10px;
   }
-  .avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    display: grid;
-    place-items: center;
-    font-weight: 700;
+  .research-svg {
+    width: 100%;
+    max-width: 360px;
+    height: auto;
   }
-  .avatar-text {
-    font-size: 0.9rem;
-    opacity: 0.9;
+  
+  /* Floating Animation */
+  .float-anim {
+    animation: floatMain 4s ease-in-out infinite;
+  }
+  @keyframes floatMain {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  
+  /* Pulse Animation for Checkmark */
+  .pulse-anim {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+  }
+  
+  /* Bar Chart Animations */
+  .bar-anim-1 { animation: barGrow 2s ease-out infinite; animation-delay: 0s; }
+  .bar-anim-2 { animation: barGrow 2s ease-out infinite; animation-delay: 0.2s; }
+  .bar-anim-3 { animation: barGrow 2s ease-out infinite; animation-delay: 0.4s; }
+  .bar-anim-4 { animation: barGrow 2s ease-out infinite; animation-delay: 0.6s; }
+  @keyframes barGrow {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+  
+  /* Floating Cards */
+  .float-card-left {
+    animation: floatLeft 5s ease-in-out infinite;
+  }
+  @keyframes floatLeft {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(5px, -10px); }
+  }
+  
+  .float-card-right {
+    animation: floatRight 5s ease-in-out infinite;
+    animation-delay: 0.5s;
+  }
+  @keyframes floatRight {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-5px, -8px); }
+  }
+  
+  /* Floating Dots */
+  .dot-float-1 { animation: dotFloat 3s ease-in-out infinite; }
+  .dot-float-2 { animation: dotFloat 4s ease-in-out infinite; animation-delay: 0.5s; }
+  .dot-float-3 { animation: dotFloat 3.5s ease-in-out infinite; animation-delay: 1s; }
+  .dot-float-4 { animation: dotFloat 4.5s ease-in-out infinite; animation-delay: 0.3s; }
+  @keyframes dotFloat {
+    0%, 100% { opacity: 0.2; transform: translateY(0); }
+    50% { opacity: 0.5; transform: translateY(-10px); }
+  }
+  
+  /* Dashed Line Animation */
+  .dash-anim {
+    animation: dashMove 2s linear infinite;
+  }
+  @keyframes dashMove {
+    0% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: 16; }
+  }
+  
+  /* Icon Animations */
+  .search-icon {
+    animation: iconBounce 3s ease-in-out infinite;
+  }
+  .edit-icon {
+    animation: iconBounce 3s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+  @keyframes iconBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.05); }
+  }
+  
+  /* Line shimmer effect */
+  .line-anim {
+    animation: lineShimmer 3s ease-in-out infinite;
+  }
+  @keyframes lineShimmer {
+    0%, 100% { opacity: 0.6; width: 80px; }
+    50% { opacity: 1; width: 100px; }
   }
 
   .auth-form-panel {
@@ -490,42 +618,7 @@
   .auth-button:hover {
     background: #5058d6;
   }
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #9ca3af;
-    margin: 20px 0;
-  }
-  .divider::before,
-  .divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: #e5e7eb;
-  }
-  .social-row {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-start;
-  }
-  .social-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    border: 1px solid #e5e7eb;
-    background: #fff;
-    display: grid;
-    place-items: center;
-    font-weight: 700;
-    color: #6b7280;
-    transition: all 0.2s ease;
-  }
-  .social-btn:hover {
-    color: #5a63ea;
-    border-color: #cdd4ff;
-    box-shadow: 0 10px 22px rgba(90, 99, 234, 0.18);
-  }
+
   .switch-link {
     margin-top: 18px;
     color: #6b7280;
@@ -564,7 +657,13 @@
       grid-template-columns: 1fr;
     }
     .auth-hero {
-      min-height: 320px;
+      min-height: 380px;
+    }
+    .hero-illustration {
+      min-height: 180px;
+    }
+    .research-svg {
+      max-width: 280px;
     }
   }
   @media (max-width: 576px) {
@@ -573,6 +672,13 @@
     }
     .auth-hero {
       padding: 32px 24px;
+      min-height: 320px;
+    }
+    .hero-illustration {
+      min-height: 150px;
+    }
+    .research-svg {
+      max-width: 240px;
     }
   }
 </style>
