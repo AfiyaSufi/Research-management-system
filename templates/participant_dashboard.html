@@ -1237,9 +1237,10 @@
         // Build step progress
         const stepProgress = buildStepProgress(p.current_step, p.status);
 
-        // Action banner for step 5
+        // Action banner for step 5 - only show if files haven't been uploaded yet
+        const filesUploaded = p.budget_file && p.revised_file;
         const actionBanner =
-          p.current_step === 5 && p.status !== "REJECTED"
+          p.current_step === 5 && p.status !== "REJECTED" && !filesUploaded
             ? `
         <div class="action-banner">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1247,6 +1248,15 @@
           </svg>
           <span class="action-banner-text">Action Required: Please upload your budget and revised proposal</span>
           <button class="btn btn-warning btn-sm" onclick="openBudgetModal(${p.id})">Upload Now</button>
+        </div>
+      `
+            : p.current_step === 5 && p.status !== "REJECTED" && filesUploaded
+            ? `
+        <div class="action-banner" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-color: #10b981;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#10b981">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span class="action-banner-text" style="color: #065f46;">Files uploaded successfully. Waiting for committee review.</span>
         </div>
       `
             : "";

@@ -62,12 +62,29 @@
                             
                             <div class="mb-3">
                                 <label for="decision" class="form-label">Decision <span class="text-danger">*</span></label>
-                                <select class="form-select" id="decision" name="decision" required>
+                                <select class="form-select" id="decision" name="decision" required onchange="toggleBudgetField()">
                                     <option value="">-- Select Decision --</option>
                                     <option value="APPROVED" class="text-success">✓ Approved</option>
                                     <option value="REVISION_REQUIRED" class="text-warning">⚠ Revision Required</option>
                                     <option value="REJECTED" class="text-danger">✗ Rejected</option>
                                 </select>
+                            </div>
+
+                            <div class="mb-3" id="budgetField">
+                                <label for="allocated_budget" class="form-label">Allocated Budget Amount <span class="text-danger" id="budgetRequired">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="allocated_budget" 
+                                           name="allocated_budget" 
+                                           step="0.01" 
+                                           min="0" 
+                                           placeholder="Enter the approved budget amount">
+                                </div>
+                                <div class="form-text">
+                                    Please specify the final budget amount approved for this research proposal. <span id="budgetNote">(Required when approving)</span>
+                                </div>
                             </div>
 
                             <div class="mb-4">
@@ -113,4 +130,25 @@
         padding: 10px;
     }
 </style>
+
+<script>
+    function toggleBudgetField() {
+        const decision = document.getElementById('decision').value;
+        const budgetInput = document.getElementById('allocated_budget');
+        const budgetRequired = document.getElementById('budgetRequired');
+        const budgetNote = document.getElementById('budgetNote');
+        
+        if (decision === 'APPROVED') {
+            budgetInput.required = true;
+            budgetRequired.style.display = 'inline';
+            budgetNote.textContent = '(Required when approving)';
+            budgetInput.classList.add('border-success');
+        } else {
+            budgetInput.required = false;
+            budgetRequired.style.display = 'none';
+            budgetNote.textContent = '(Optional for rejection/revision)';
+            budgetInput.classList.remove('border-success');
+        }
+    }
+</script>
 {% endblock %}

@@ -61,6 +61,7 @@ class Proposal(models.Model):
     
     # Step-specific data
     plagiarism_percentage = models.FloatField(null=True, blank=True)
+    allocated_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -132,6 +133,7 @@ class CommitteeReview(models.Model):
     
     decision = models.CharField(max_length=20, choices=DECISION_CHOICES, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
+    allocated_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     invited_at = models.DateTimeField(auto_now_add=True)

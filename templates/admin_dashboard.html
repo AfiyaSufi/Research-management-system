@@ -2883,6 +2883,11 @@
               ? `<br><small class="text-muted">Plagiarism: ${p.plagiarism_percentage}%</small>`
               : ""
           }
+          ${
+            p.allocated_budget
+              ? `<br><small class="text-muted">Budget: $${parseFloat(p.allocated_budget).toLocaleString()}</small>`
+              : ""
+          }
         </td>
         <td>${escapeHtml(p.participant_name || "N/A")}</td>
         <td>${escapeHtml(p.notice_title || "None")}</td>
@@ -3270,9 +3275,9 @@
     proposalSearchQuery = searchQuery;
 
     const filtered = proposals.filter((p) => {
-      const matchesStep = !stepFilter || p.current_step == stepFilter;
+      const matchesStep = !stepFilter || String(p.current_step) === String(stepFilter);
       const matchesStatus = !statusFilter || p.status === statusFilter;
-      const matchesNotice = !noticeFilter || p.notice == noticeFilter;
+      const matchesNotice = !noticeFilter || String(p.notice) === String(noticeFilter);
       const matchesSearch =
         !searchQuery ||
         p.title.toLowerCase().includes(searchQuery) ||
@@ -3281,11 +3286,15 @@
       return matchesStep && matchesStatus && matchesNotice && matchesSearch;
     });
 
-    document.getElementById("proposals-tbody").innerHTML =
-      renderProposalsTableRows(filtered);
-    document.getElementById(
-      "proposals-count-label"
-    ).textContent = `${filtered.length} of ${proposals.length} proposals`;
+    const tbody = document.getElementById("proposals-tbody");
+    const countLabel = document.getElementById("proposals-count-label");
+    
+    if (tbody) {
+      tbody.innerHTML = renderProposalsTableRows(filtered);
+    }
+    if (countLabel) {
+      countLabel.textContent = `${filtered.length} of ${proposals.length} proposals`;
+    }
   }
 
   // ===== Step Action Functions =====
@@ -3399,14 +3408,26 @@
 
   async function completeCommitteeReview(proposalId) {
     if (actionInProgress[`committee-${proposalId}`]) return;
+    
+    // Prompt for budget allocation
+    const budgetInput = prompt("Enter allocated budget amount (e.g., 50000):");
+    if (budgetInput === null) return; // User cancelled
+    
+    const allocatedBudget = parseFloat(budgetInput);
+    if (isNaN(allocatedBudget) || allocatedBudget < 0) {
+      showToast("Please enter a valid budget amount", "error");
+      return;
+    }
+    
     actionInProgress[`committee-${proposalId}`] = true;
     
     try {
       const res = await axios.post(
-        `${API_URL}/proposals/${proposalId}/complete_committee_review/`
+        `${API_URL}/proposals/${proposalId}/complete_committee_review/`,
+        { allocated_budget: allocatedBudget }
       );
       showToast(
-        `Committee review ${res.data.status}`,
+        `Committee review ${res.data.status} - Budget: $${allocatedBudget.toLocaleString()}`,
         res.data.status === "rejected" ? "error" : "success"
       );
       loadProposals();
@@ -3533,13 +3554,23 @@
         endpoint = `${API_URL}/proposals/${inviteTarget.id}/invite_rector/`;
       }
 
-      await axios.post(endpoint, { name, email });
-      showToast(
-        `${
-          inviteTarget.type === "rector" ? "Sent to" : "Invitation sent to"
-        } ${name}`,
-        "success"
-      );
+      const response = await axios.post(endpoint, { name, email });
+      const emailSent = response.data.email_sent;
+      
+      if (emailSent) {
+        showToast(
+          `${
+            inviteTarget.type === "rector" ? "Sent to" : "Invitation email sent to"
+          } ${email}`,
+          "success"
+        );
+      } else {
+        showToast(
+          `Invitation created for ${name}, but email delivery failed. Check server logs.`,
+          "warning"
+        );
+      }
+      
       inviteModal.hide();
       // Refresh both proposals table and dashboard
       await loadProposals();
@@ -3570,15 +3601,15 @@
               (t) => `
         <div class="timeline-item">
           <div class="timeline-dot ${
-            t.action.includes("Rejected")
+            t.action.toLowerCase().includes("rejected")
               ? "rejected"
-              : t.action.includes("Accepted") || t.action.includes("Approved")
+              : t.action.toLowerCase().includes("accepted") || t.action.toLowerCase().includes("approved") || t.action.toLowerCase().includes("checked") || t.action.toLowerCase().includes("submitted")
               ? "accepted"
               : ""
           }"></div>
           <div class="timeline-content">
             <strong>${escapeHtml(t.step_name)}</strong>: ${escapeHtml(t.action)}
-            <br><small class="text-muted">${formatDateTime(t.created_at)}${
+            <br><small class="text-muted">${formatDateTime(t.timestamp)}${
                 t.actor_name ? " by " + escapeHtml(t.actor_name) : ""
               }</small>
             ${t.details ? `<br><small>${escapeHtml(t.details)}</small>` : ""}
@@ -4015,7 +4046,7 @@
 
     const filtered = libraryProposals.filter((p) => {
       const matchesStatus = !statusFilter || p.status === statusFilter;
-      const matchesNotice = !noticeFilter || p.notice == noticeFilter;
+      const matchesNotice = !noticeFilter || String(p.notice) === String(noticeFilter);
       const matchesSearch =
         !searchQuery ||
         p.title.toLowerCase().includes(searchQuery) ||
@@ -4024,11 +4055,15 @@
       return matchesStatus && matchesNotice && matchesSearch;
     });
 
-    document.getElementById("library-tbody").innerHTML =
-      renderLibraryTableRows(filtered);
-    document.getElementById(
-      "library-count-label"
-    ).textContent = `${filtered.length} of ${libraryProposals.length} archived`;
+    const tbody = document.getElementById("library-tbody");
+    const countLabel = document.getElementById("library-count-label");
+    
+    if (tbody) {
+      tbody.innerHTML = renderLibraryTableRows(filtered);
+    }
+    if (countLabel) {
+      countLabel.textContent = `${filtered.length} of ${libraryProposals.length} archived`;
+    }
   }
 
   function viewLibraryDetail(proposalId) {
@@ -4044,15 +4079,15 @@
               (t) => `
         <div class="timeline-item">
           <div class="timeline-dot ${
-            t.action.includes("Rejected")
+            t.action.toLowerCase().includes("rejected")
               ? "rejected"
-              : t.action.includes("Accepted") || t.action.includes("Approved")
+              : t.action.toLowerCase().includes("accepted") || t.action.toLowerCase().includes("approved") || t.action.toLowerCase().includes("checked") || t.action.toLowerCase().includes("submitted")
               ? "accepted"
               : ""
           }"></div>
           <div class="timeline-content">
             <strong>${escapeHtml(t.step_name)}</strong>: ${escapeHtml(t.action)}
-            <br><small class="text-muted">${formatDateTime(t.created_at)}${
+            <br><small class="text-muted">${formatDateTime(t.timestamp)}${
                 t.actor_name ? " by " + escapeHtml(t.actor_name) : ""
               }</small>
             ${t.details ? `<br><small>${escapeHtml(t.details)}</small>` : ""}
@@ -4100,6 +4135,11 @@
           ${
             p.plagiarism_percentage
               ? `<p><strong>Plagiarism:</strong> ${p.plagiarism_percentage}%</p>`
+              : ""
+          }
+          ${
+            p.allocated_budget
+              ? `<p><strong>Allocated Budget:</strong> $${parseFloat(p.allocated_budget).toLocaleString()}</p>`
               : ""
           }
           ${

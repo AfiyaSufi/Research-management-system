@@ -77,7 +77,7 @@ class CommitteeReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommitteeReview
         fields = ['id', 'proposal', 'email', 'name', 'decision', 'comments',
-                  'status', 'invited_at', 'completed_at', 'expires_at']
+                  'allocated_budget', 'status', 'invited_at', 'completed_at', 'expires_at']
         read_only_fields = ('token', 'invited_at', 'completed_at', 'status')
 
 
@@ -205,7 +205,7 @@ class ProposalSerializer(serializers.ModelSerializer):
         model = Proposal
         fields = '__all__'
         read_only_fields = ('participant', 'status', 'current_step', 'created_at', 'updated_at',
-                            'plagiarism_percentage', 'rejection_reason')
+                            'plagiarism_percentage', 'rejection_reason', 'allocated_budget')
 
     def get_evaluator_average(self, obj):
         return obj.get_evaluator_average()
@@ -228,13 +228,15 @@ class ProposalListSerializer(serializers.ModelSerializer):
     evaluations = EvaluatorSerializer(many=True, read_only=True)
     committee_reviews = CommitteeReviewSerializer(many=True, read_only=True)
     evaluator_average = serializers.SerializerMethodField()
+    timeline = ProposalTimelineSerializer(many=True, read_only=True)
 
     class Meta:
         model = Proposal
-        fields = ['id', 'title', 'participant_name', 'notice_title', 'status', 
+        fields = ['id', 'title', 'participant_name', 'notice', 'notice_title', 'status', 
                   'current_step', 'step_display', 'created_at', 'updated_at',
                   'evaluations', 'committee_reviews', 'evaluator_average',
-                  'proposal_file', 'budget_file', 'revised_file', 'plagiarism_percentage']
+                  'proposal_file', 'budget_file', 'revised_file', 'plagiarism_percentage',
+                  'allocated_budget', 'timeline', 'rejection_reason']
 
     def get_step_display(self, obj):
         return dict(obj.STEP_CHOICES).get(obj.current_step, 'Unknown')
@@ -254,9 +256,10 @@ class ParticipantProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proposal
         fields = ['id', 'title', 'description', 'notice', 'notice_title', 'status',
-                  'current_step', 'step_display', 'proposal_file', 'timeline',
-                  'evaluations', 'evaluator_average', 'created_at', 'updated_at']
-        read_only_fields = ('status', 'current_step', 'created_at', 'updated_at')
+                  'current_step', 'step_display', 'proposal_file', 'budget_file', 
+                  'revised_file', 'timeline', 'evaluations', 'evaluator_average', 
+                  'created_at', 'updated_at', 'allocated_budget']
+        read_only_fields = ('status', 'current_step', 'created_at', 'updated_at', 'allocated_budget')
 
     def get_evaluator_average(self, obj):
         return obj.get_evaluator_average()

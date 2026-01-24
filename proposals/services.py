@@ -67,7 +67,7 @@ def send_evaluator_invite(evaluator):
     plain_message = strip_tags(html_message)
     
     try:
-        send_mail(
+        result = send_mail(
             subject=subject,
             message=plain_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
@@ -75,9 +75,10 @@ def send_evaluator_invite(evaluator):
             html_message=html_message,
             fail_silently=False,
         )
+        print(f"[EMAIL] Successfully sent evaluator invite to {evaluator.email} for proposal '{evaluator.proposal.title}'. Result: {result}")
         return True
     except Exception as e:
-        print(f"Failed to send evaluator invite: {e}")
+        print(f"[EMAIL ERROR] Failed to send evaluator invite to {evaluator.email}: {e}")
         return False
 
 

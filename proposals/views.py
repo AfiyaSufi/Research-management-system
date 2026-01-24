@@ -105,8 +105,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         proposal = serializer.save(participant=self.request.user)
-        self.log_action(proposal, 'Submission', 'Proposal Submitted', 
-                       f"Initial submission by {self.request.user.username}")
+        self.log_action(proposal, 'Submission', 'Proposal has been submitted')
 
     def log_action(self, proposal, step, action, details=None, actor=None, actor_name=None):
         ProposalTimeline.objects.create(
@@ -151,7 +150,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         if accepted:
             proposal.current_step = 2
             proposal.save()
-            self.log_action(proposal, 'Format Check', 'Accepted', 'Format check passed')
+            self.log_action(proposal, 'Format Check', 'Format checked')
             send_step_progress_email(proposal, 'Format Checking', True)
             return Response({'status': 'moved to step 2'})
         else:
@@ -176,13 +175,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
             proposal.status = 'REJECTED'
             proposal.rejection_reason = f'Plagiarism score too high: {percentage}%'
             proposal.save()
-            self.log_action(proposal, 'Plagiarism Check', 'Rejected', f'Plagiarism {percentage}% > 20%')
+            self.log_action(proposal, 'Plagiarism Check', f'Plagiarism checked: {percentage}%', 'Rejected - exceeded 20% threshold')
             send_rejection_email(proposal, 'Plagiarism Checking', f'Plagiarism score: {percentage}% (max allowed: 20%)')
             return Response({'status': 'rejected', 'percentage': percentage})
         else:
             proposal.current_step = 3
             proposal.save()
-            self.log_action(proposal, 'Plagiarism Check', 'Accepted', f'Plagiarism {percentage}% <= 20%')
+            self.log_action(proposal, 'Plagiarism Check', f'Plagiarism checked: {percentage}%')
             send_step_progress_email(proposal, 'Plagiarism Checking', True)
             return Response({'status': 'moved to step 3', 'percentage': percentage})
 
@@ -266,13 +265,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
             reason_text = 'Did not attend seminar' if not attended else (reason or 'Faculty rejected presentation')
             proposal.rejection_reason = reason_text
             proposal.save()
-            self.log_action(proposal, 'Seminar', 'Rejected', reason_text)
+            self.log_action(proposal, 'Seminar', 'Faculty seminar rejected', reason_text)
             send_rejection_email(proposal, 'Seminar Presentation', reason_text)
             return Response({'status': 'rejected'})
         else:
             proposal.current_step = 5
             proposal.save()
-            self.log_action(proposal, 'Seminar', 'Accepted', 'Seminar successful')
+            self.log_action(proposal, 'Seminar', 'Faculty seminar accepted')
             send_step_progress_email(proposal, 'Seminar Presentation', True)
             return Response({'status': 'moved to step 5'})
 
@@ -345,15 +344,34 @@ class ProposalViewSet(viewsets.ModelViewSet):
             proposal.status = 'REJECTED'
             proposal.rejection_reason = 'Committee rejected proposal'
             proposal.save()
-            self.log_action(proposal, 'Research Committee', 'Rejected', 'Committee rejected')
+            self.log_action(proposal, 'Research Committee', 'Committee rejected')
             send_rejection_email(proposal, 'Research Committee', 'Committee rejected the proposal')
             return Response({'status': 'rejected'})
         
+        # Get allocated budget - first check if admin provided one, then check committee reviews
+        allocated_budget = request.data.get('allocated_budget')
+        if not allocated_budget:
+            # Check if any committee member provided a budget in their review
+            approved_with_budget = completed_reviews.filter(
+                decision='APPROVED', 
+                allocated_budget__isnull=False
+            ).first()
+            if approved_with_budget:
+                allocated_budget = approved_with_budget.allocated_budget
+        
+        if allocated_budget:
+            try:
+                proposal.allocated_budget = float(allocated_budget)
+            except (ValueError, TypeError):
+                return Response({'error': 'Invalid budget amount'}, status=status.HTTP_400_BAD_REQUEST)
+        
         proposal.current_step = 6
         proposal.save()
-        self.log_action(proposal, 'Research Committee', 'Approved', 'Committee approved')
+        
+        budget_detail = f'Allocated budget: ${proposal.allocated_budget:,.2f}' if proposal.allocated_budget else 'Committee approved'
+        self.log_action(proposal, 'Research Committee', 'Committee approved', budget_detail)
         send_step_progress_email(proposal, 'Research Committee', True)
-        return Response({'status': 'moved to step 6'})
+        return Response({'status': 'moved to step 6', 'allocated_budget': str(proposal.allocated_budget) if proposal.allocated_budget else None})
 
     @decorators.action(detail=True, methods=['post'])
     def invite_rector(self, request, pk=None):
@@ -541,6 +559,7 @@ class CommitteeFormView(APIView):
         
         decision = request.POST.get('decision')
         comments = request.POST.get('comments', '')
+        allocated_budget = request.POST.get('allocated_budget', '')
         
         if decision not in ['APPROVED', 'REJECTED', 'REVISION_REQUIRED']:
             serializer = CommitteeReviewDetailSerializer(review, context={'request': request})
@@ -550,18 +569,43 @@ class CommitteeFormView(APIView):
             }
             return render(request, 'committee_form.html', context)
         
+        # Validate budget is provided when approving
+        if decision == 'APPROVED' and not allocated_budget:
+            serializer = CommitteeReviewDetailSerializer(review, context={'request': request})
+            context = {
+                'error': 'Please specify the allocated budget amount when approving',
+                'review': serializer.data
+            }
+            return render(request, 'committee_form.html', context)
+        
         review.decision = decision
         review.comments = comments
         review.status = 'COMPLETED'
         review.completed_at = timezone.now()
+        
+        # Save allocated budget if approving
+        if decision == 'APPROVED' and allocated_budget:
+            try:
+                review.allocated_budget = float(allocated_budget)
+                # Also save to the proposal
+                review.proposal.allocated_budget = float(allocated_budget)
+                review.proposal.save()
+            except (ValueError, TypeError):
+                pass
+        
         review.save()
+        
+        # Build timeline details with budget if approved
+        timeline_details = comments
+        if decision == 'APPROVED' and allocated_budget:
+            timeline_details = f'Allocated Budget: ${float(allocated_budget):,.2f}' + (f'\n{comments}' if comments else '')
         
         ProposalTimeline.objects.create(
             proposal=review.proposal,
             step_name='Research Committee',
             action=f'Committee Review: {decision}',
             actor_name=review.name,
-            details=comments
+            details=timeline_details
         )
         
         context = {
@@ -646,7 +690,7 @@ class RectorFormView(APIView):
             ProposalTimeline.objects.create(
                 proposal=proposal,
                 step_name='Rector Approval',
-                action='Final Approval Granted',
+                action='Rector approved',
                 actor_name=review.name,
                 details=comments
             )
@@ -658,7 +702,7 @@ class RectorFormView(APIView):
             ProposalTimeline.objects.create(
                 proposal=proposal,
                 step_name='Rector Approval',
-                action='Rejected by Rector',
+                action='Rector rejected',
                 actor_name=review.name,
                 details=comments
             )
